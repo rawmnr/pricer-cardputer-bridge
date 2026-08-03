@@ -3,28 +3,44 @@
 ## Dependency graph
 
 ```text
-T001 -> T002 -> T003
-  |       |
-  +-----> T004 -> T005 -> T006 -> T007 -> T008 -> T009 -> T010
+T001 -> T001A -> T002 -> T003
+                  |       |
+                  +-----> T004 -> T005 -> T006 -> T007 -> T008 -> T009 -> T010
 ```
 
-## T001 - Reproducible toolchain and CI
+## T001 - Reproducible toolchain, CI, and application artifact
 
 Acceptance:
 
-- `uv sync --project pc --all-groups` succeeds on Windows and CI.
-- `pytest`, `ruff`, and `mypy` pass.
-- PlatformIO builds the firmware in CI.
+- `uv sync --project pc --all-groups` succeeds on Windows and CI;
+- `pytest`, `ruff`, and `mypy` pass;
+- PlatformIO builds the firmware in CI;
+- CI verifies and uploads the application-only `firmware.bin` with an explicit Cardputer-Adv filename;
 - dependency pins and update policy are documented.
 
 Task brief: `docs/tasks/T001-toolchain-ci.md`
+
+## T001A - M5Launcher deployment validation
+
+Acceptance:
+
+- the CI/local application-only binary is accepted by M5Launcher;
+- SD-card and/or WebUI installation is documented with the exact Launcher version tested;
+- the bridge application boots without a full flash erase;
+- reboot can return to M5Launcher;
+- COM-port behavior across Launcher-to-application handoff is recorded;
+- no project code rewrites the partition table, OTA metadata, or all NVS;
+- recovery through Cardputer-Adv download mode and M5Burner is documented but not used as the normal path.
+
+Task brief: `docs/tasks/T001A-m5launcher-deployment.md`
 
 ## T002 - USB HELLO/probe round trip
 
 Acceptance:
 
-- firmware returns a valid HELLO response;
+- firmware returns a valid HELLO response after being launched by M5Launcher;
 - host discovers an explicit COM port and validates version/capabilities;
+- reconnect/retry behavior handles USB CDC re-enumeration after Launcher handoff;
 - timeout, CRC mismatch, and wrong-device failures are actionable;
 - tests use a fake serial transport.
 
