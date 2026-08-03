@@ -12,7 +12,7 @@ Windows host (MSI Claw 8 AI+)
               |
               | USB CDC
               v
-M5Stack Cardputer-Adv
+M5Stack Cardputer-Adv application
   framed command parser + ESP32-S3 RMT
               |
               | IR, target carrier ~1.245 MHz
@@ -21,6 +21,38 @@ Pricer SmartTAG ESL
 ```
 
 The first target is the photographed Pricer SmartTAG HD M+ Red unit, provisionally treated as a 208 x 112 black/white/red tag. That model identification and all protocol timings remain hypotheses until verified on hardware.
+
+## Deployment model: keep M5Launcher installed
+
+**M5Launcher is the primary deployment path.** The project is built as a normal ESP32-S3 application binary, then installed and launched by M5Launcher. Routine development must not erase the full flash or replace the Launcher installation.
+
+```text
+PlatformIO / GitHub Actions
+        |
+        | application-only .bin
+        v
+M5Launcher on Cardputer-Adv
+  SD install or WebUI OTA upload
+        |
+        v
+Pricer Cardputer Bridge application
+```
+
+M5Launcher can install normal application binaries produced by Arduino, PlatformIO, or ESP-IDF into an application partition. It remains resident and can boot the selected installed application. See [`docs/m5launcher-deployment.md`](docs/m5launcher-deployment.md).
+
+The expected development artifact is:
+
+```text
+firmware/.pio/build/m5stack-cardputer-adv/firmware.bin
+```
+
+For distribution, rename it to an explicit application filename such as:
+
+```text
+pricer-cardputer-bridge-cardputer-adv-<version-or-sha>.bin
+```
+
+Use the application-only `firmware.bin`. Do not distribute a full flash dump or a merged image containing a bootloader and partition table unless a future task explicitly requires and documents that format.
 
 ## Why this split
 
@@ -31,7 +63,7 @@ The Windows application owns the fast-changing and testable logic: image convers
 ```text
 firmware/        PlatformIO firmware for Cardputer-Adv
 pc/              Python 3.12+ Windows host package managed with uv
-docs/            architecture, protocol, hardware notes, ADRs, task briefs
+docs/            architecture, deployment, protocol, hardware notes, ADRs, tasks
 scripts/         PowerShell bootstrap and verification scripts
 .github/         CI, pull-request template, issue templates
 AGENTS.md        operating contract for Codex-style coding agents
@@ -55,13 +87,16 @@ Project hypotheses requiring bench validation:
 
 See [`docs/hardware-notes.md`](docs/hardware-notes.md) and [`docs/research-log.md`](docs/research-log.md).
 
-## Safety constraints
+## Safety and flash-layout constraints
 
 - The firmware hard-limits carrier tests to **5 ms** per command.
 - No continuous-carrier command is permitted.
 - Start at 1-2 cm from the ESL receiver and avoid direct sunlight.
 - Do not remove the ESL batteries or open the enclosure during the protocol-first phase.
 - Do not connect 5 V logic directly to ESP32 or ESL test pads.
+- Do not erase the complete Cardputer flash during routine development.
+- Do not rewrite the partition table, OTA metadata, or Launcher-owned partitions from application code.
+- Do not erase all NVS; use a project-specific namespace such as `eslbridge` if persistence is added.
 
 ## Windows quick start
 
@@ -71,6 +106,7 @@ Prerequisites:
 - Python 3.12+
 - [uv](https://docs.astral.sh/uv/)
 - PlatformIO Core (`pipx install platformio` or the VS Code extension)
+- M5Launcher already installed on the Cardputer-Adv
 
 ```powershell
 # From the repository root
@@ -79,21 +115,37 @@ powershell -ExecutionPolicy Bypass -File .\scripts\bootstrap.ps1
 # Run host tests
 uv run --project .\pc pytest
 
-# Build firmware
+# Build the application-only binary
 pio run -d .\firmware
 
-# Upload, then inspect the USB serial port
-pio run -d .\firmware -t upload
-pio device list
+# Locate the M5Launcher-compatible application binary
+Get-Item .\firmware\.pio\build\m5stack-cardputer-adv\firmware.bin
+```
 
-# Probe the bridge
+Install the `.bin` with either:
+
+1. **M5Launcher SD browser:** copy the file to the microSD card, open `SD`, select the binary, and install it.
+2. **M5Launcher WebUI:** start `WUI`, upload the binary from Windows, then install it through OTA.
+
+After launching the bridge application, Windows may remove and recreate the USB CDC COM port. Discover the new port before probing:
+
+```powershell
+pio device list
 uv run --project .\pc eslbridge probe --port COM7
 
 # Bounded optical smoke test: 2 ms at 1.245 MHz
 uv run --project .\pc eslbridge carrier-test --port COM7 --duration-us 2000
 ```
 
+For normal development, **do not use** `pio run -d .\firmware -t upload`. Direct bootloader flashing is reserved for explicit recovery or low-level debugging tasks. If the Launcher installation is damaged, restore it with M5Burner using the Cardputer-Adv download-mode procedure documented by M5Stack.
+
 The carrier test proves only that the firmware accepted and attempted the request. A phone camera may show IR emission, but it cannot validate carrier frequency or timing. A logic analyzer or photodiode measurement remains the proper validation method.
+
+## CI artifacts
+
+The firmware CI job builds `firmware.bin`, verifies that it is a non-empty ESP application image, renames it with the commit SHA, and uploads it as a GitHub Actions artifact. The artifact is intended for M5Launcher installation, not full-flash programming.
+
+Tagged GitHub Release automation is intentionally deferred until version injection and a real M5Launcher install/return cycle are validated.
 
 ## Host protocol
 
@@ -108,13 +160,15 @@ Implemented scaffold commands:
 
 ## Development sequence
 
-1. Compile and flash the Cardputer firmware.
-2. Validate USB CDC framing and CRC behavior.
-3. Validate GPIO 44 carrier bursts at ~1.245 MHz.
-4. Implement PP16 waveform generation from independently verified timings.
-5. Add a clean host adapter around Pricer frame generation.
-6. Transfer a monochrome test pattern, then a red/black/white pattern.
-7. Add templates, image pipeline, and Home Assistant/MQTT integration.
+1. Make the Windows/Python and PlatformIO toolchains reproducible.
+2. Produce and validate an application-only M5Launcher artifact.
+3. Install, boot, and return to M5Launcher without full-device reflashing.
+4. Validate USB CDC framing and COM-port reconnection behavior.
+5. Validate GPIO 44 carrier bursts at ~1.245 MHz.
+6. Implement PP16 waveform generation from independently verified timings.
+7. Add a clean host adapter around Pricer frame generation.
+8. Transfer a monochrome test pattern, then a red/black/white pattern.
+9. Add templates, image pipeline, and Home Assistant/MQTT integration.
 
 The agent-ready backlog is in [`docs/backlog.md`](docs/backlog.md).
 
