@@ -39,5 +39,36 @@ jobs:
           cache: pip
       - name: Install PlatformIO
         run: python -m pip install --upgrade platformio
-      - name: Build firmware
+      - name: Build firmware application
         run: pio run -d firmware
+      - name: Validate and stage M5Launcher application binary
+        shell: bash
+        run: |
+          python - <<'PY'
+          import os
+          from pathlib import Path
+
+          source = Path("firmware/.pio/build/m5stack-cardputer-adv/firmware.bin")
+          data = source.read_bytes()
+          if not data:
+              raise SystemExit("firmware.bin is empty")
+          if data[0] != 0xE9:
+              raise SystemExit(
+                  f"firmware.bin does not start with ESP image magic 0xE9: 0x{data[0]:02X}"
+              )
+
+          short_sha = os.environ["GITHUB_SHA"][:7]
+          destination = Path("dist") / (
+              f"pricer-cardputer-bridge-cardputer-adv-{short_sha}.bin"
+          )
+          destination.parent.mkdir(parents=True, exist_ok=True)
+          destination.write_bytes(data)
+          print(f"Staged {destination} ({len(data)} bytes)")
+          PY
+      - name: Upload M5Launcher application artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: pricer-cardputer-bridge-cardputer-adv-${{ github.sha }}
+          path: dist/*.bin
+          if-no-files-found: error
+          retention-days: 30
