@@ -2,15 +2,21 @@
 
 ## Objective
 
-Prove the Windows host can identify the Cardputer bridge over a selected COM port using the versioned binary protocol.
+Prove the Windows host can identify the Cardputer bridge over USB after M5Launcher installs and starts the application, using the versioned binary protocol.
+
+## Depends on
+
+T001 and T001A.
 
 ## Work
 
 - complete firmware stream parser and HELLO response;
-- add fake-serial host tests;
 - report firmware version, protocol version, max payload, GPIO, and capabilities;
-- distinguish port missing, access denied, timeout, wrong protocol, and CRC failure;
-- add a bench record from the real Cardputer.
+- handle USB CDC disconnection and re-enumeration when Launcher starts the bridge application;
+- add bounded port discovery/retry behavior with explicit timeouts;
+- distinguish port missing, multiple candidates, access denied, timeout, wrong protocol, and CRC failure;
+- add fake-serial host tests for round trip, retry, and failure behavior;
+- add a bench record from the real Cardputer with Launcher/app COM-port observations.
 
 ## Acceptance
 
