@@ -1,0 +1,37 @@
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.venv/
+.coverage
+htmlcov/
+
+# uv / package builds
+dist/
+build/
+*.egg-info/
+
+# PlatformIO
+firmware/.pio/
+firmware/.cache/
+
+# IDE / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Local captures and generated images
+artifacts/
+captures/
+images/generated/
+*.bin
+*.elf
+*.map
+
+# Local serial/device settings
+.env
+.env.*
+!.env.example

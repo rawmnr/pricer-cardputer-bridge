@@ -1,0 +1,30 @@
+name: Hardware bench experiment
+description: A reproducible hardware measurement or ESL trial
+title: "[BENCH] "
+labels: ["hardware", "experiment"]
+body:
+  - type: textarea
+    id: hypothesis
+    attributes:
+      label: Hypothesis
+    validations:
+      required: true
+  - type: textarea
+    id: setup
+    attributes:
+      label: Setup and equipment
+    validations:
+      required: true
+  - type: textarea
+    id: procedure
+    attributes:
+      label: Procedure
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Decision rule
+      description: What result confirms, rejects, or leaves the hypothesis unresolved?
+    validations:
+      required: true

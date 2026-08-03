@@ -1,0 +1,49 @@
+[project]
+name = "pricer-cardputer-bridge"
+version = "0.1.0"
+description = "Windows host tools for a Cardputer-Adv Pricer ESL infrared bridge"
+readme = "../README.md"
+requires-python = ">=3.12"
+license = { text = "GPL-3.0-only" }
+authors = [{ name = "Romain Meunier" }]
+dependencies = [
+    "pyserial>=3.5,<4",
+    "rich>=13.9,<15",
+    "typer>=0.16,<1",
+]
+
+[project.scripts]
+eslbridge = "eslbridge.cli:app"
+
+[dependency-groups]
+dev = [
+    "mypy>=1.17,<2",
+    "pytest>=8.4,<9",
+    "pytest-cov>=6.2,<8",
+    "ruff>=0.12,<1",
+    "types-pyserial>=3.5.0.20250326",
+]
+
+[build-system]
+requires = ["hatchling>=1.27"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/eslbridge"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q --strict-markers --disable-warnings"
+
+[tool.ruff]
+target-version = "py312"
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM", "RUF"]
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
+packages = ["eslbridge"]
+mypy_path = "src"

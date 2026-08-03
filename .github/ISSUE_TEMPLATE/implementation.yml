@@ -1,0 +1,42 @@
+name: Implementation task
+description: A bounded agent-ready implementation task
+title: "[TASK] "
+labels: ["implementation"]
+body:
+  - type: textarea
+    id: objective
+    attributes:
+      label: Objective
+      description: One concrete outcome.
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Evidence and references
+      description: Primary sources, captures, or prior task outputs.
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance criteria
+      description: Testable completion conditions.
+    validations:
+      required: true
+  - type: textarea
+    id: exclusions
+    attributes:
+      label: Non-goals
+      description: Prevent scope creep.
+  - type: checkboxes
+    id: guardrails
+    attributes:
+      label: Guardrails
+      options:
+        - label: Safety limits are preserved.
+          required: true
+        - label: Protocol changes include tests and documentation.
+          required: true
+        - label: Third-party code license/provenance is checked.
+          required: true
