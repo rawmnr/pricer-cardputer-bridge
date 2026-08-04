@@ -16,5 +16,12 @@ inline constexpr std::uint32_t kMaxCarrierHz = 2'000'000;
 inline constexpr std::uint8_t kMinDutyPercent = 10;
 inline constexpr std::uint8_t kMaxDutyPercent = 60;
 inline constexpr std::uint32_t kParserTimeoutMs = 2'000;
+inline constexpr std::uint8_t kModulationPp4 = 4;
+inline constexpr std::uint8_t kModulationPp16 = 16;
+inline constexpr std::size_t kMinPricerFrameBytes = 1;
+inline constexpr std::size_t kMaxPricerFrameBytes = 256;
+inline constexpr std::uint16_t kMinPricerRepeats = 1;
+inline constexpr std::uint16_t kMaxPricerRepeats = 100;
+inline constexpr std::uint32_t kMaxInterRepeatGapUs = 1'000'000;
 
 }  // namespace eslbridge::config

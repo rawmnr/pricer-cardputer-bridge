@@ -55,8 +55,7 @@ void handle_message(const eslbridge::protocol::MessageView& message) {
             payload[1] = 0;
             payload[2] = 1;
             payload[3] = 0;
-            const std::uint32_t capabilities = (1U << 0U) | (1U << 3U);
-            eslbridge::protocol::write_u32_le(payload.data() + 4, capabilities);
+            const std::uint32_t capabilities = (1U << 0U) | (1U << 2U) | (1U << 3U);
             eslbridge::protocol::write_u16_le(
                 payload.data() + 8,
                 static_cast<std::uint16_t>(eslbridge::config::kMaxPayload));
@@ -105,10 +104,34 @@ void handle_message(const eslbridge::protocol::MessageView& message) {
             break;
         }
 
-        case Command::kSendPricerFrame:
-            device_status.last_error = transmitter.send_pricer_frame();
-            send_response(message.command, device_status.last_error, message.sequence);
+        case Command::kSendPricerFrame: {
+            if (message.payload.size() < 10) {
+                device_status.last_error = Status::kInvalidArgument;
+                send_response(message.command, device_status.last_error, message.sequence);
+                break;
+            }
+            const auto modulation = message.payload[0];
+            const auto reserved = message.payload[1];
+            const auto repeats = eslbridge::protocol::read_u16_le(message.payload.data() + 2);
+            const auto inter_repeat_gap_us = eslbridge::protocol::read_u32_le(message.payload.data() + 4);
+            const auto frame_length = eslbridge::protocol::read_u16_le(message.payload.data() + 8);
+
+            if (message.payload.size() != 10 + frame_length || reserved != 0) {
+                device_status.last_error = Status::kInvalidArgument;
+                send_response(message.command, device_status.last_error, message.sequence);
+                break;
+            }
+
+            const auto status = transmitter.send_pricer_frame(
+                modulation,
+                repeats,
+                inter_repeat_gap_us,
+                message.payload.data() + 10,
+                frame_length);
+            device_status.last_error = status;
+            send_response(message.command, status, message.sequence);
             break;
+        }
 
         default:
             device_status.last_error = Status::kUnsupportedCommand;

@@ -1,9 +1,22 @@
 #pragma once
 
+#include <array>
 #include <cstdint>
 
 #include "app_config.hpp"
 #include "bridge_protocol.hpp"
+#include "pp16_encoder.hpp"
+
+#if __has_include(<driver/rmt.h>)
+#include <driver/rmt.h>
+#else
+typedef struct {
+    std::uint32_t duration0 : 15;
+    std::uint32_t level0 : 1;
+    std::uint32_t duration1 : 15;
+    std::uint32_t level1 : 1;
+} rmt_item32_t;
+#endif
 
 namespace eslbridge {
 
@@ -49,6 +62,25 @@ constexpr CarrierBurstPlan make_carrier_burst_plan(const std::uint32_t duration_
     const std::uint16_t second = static_cast<std::uint16_t>(total_ticks - kMaxPhaseTicks);
     return CarrierBurstPlan{first, second};
 }
+constexpr bool valid_pricer_frame_request(
+    const std::uint8_t modulation,
+    const std::uint16_t repeats,
+    const std::uint32_t inter_repeat_gap_us,
+    const std::size_t frame_length) {
+    if (modulation != config::kModulationPp4 && modulation != config::kModulationPp16) {
+        return false;
+    }
+    if (repeats < config::kMinPricerRepeats || repeats > config::kMaxPricerRepeats) {
+        return false;
+    }
+    if (inter_repeat_gap_us > config::kMaxInterRepeatGapUs) {
+        return false;
+    }
+    if (frame_length < config::kMinPricerFrameBytes || frame_length > config::kMaxPricerFrameBytes) {
+        return false;
+    }
+    return true;
+}
 
 }  // namespace detail
 
@@ -56,7 +88,12 @@ class IrTransmitter {
 public:
     protocol::Status begin();
     protocol::Status carrier_test(std::uint32_t frequency_hz, std::uint32_t duration_us, std::uint8_t duty_percent);
-    protocol::Status send_pricer_frame();
+    protocol::Status send_pricer_frame(
+        std::uint8_t modulation,
+        std::uint16_t repeats,
+        std::uint32_t inter_repeat_gap_us,
+        const std::uint8_t* frame_data,
+        std::size_t frame_length);
     protocol::TransmitterState state() const { return state_; }
     std::uint32_t tx_count() const { return tx_count_; }
 
@@ -64,6 +101,8 @@ private:
     protocol::TransmitterState state_{protocol::TransmitterState::kIdle};
     std::uint32_t tx_count_{0};
     bool initialized_{false};
+    pp16::EncodedFrame encoded_frame_{};
+    std::array<rmt_item32_t, pp16::kMaxSymbolsPerFrame> rmt_items_{};
 };
 
 }  // namespace eslbridge

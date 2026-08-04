@@ -1,14 +1,13 @@
 """Command-line interface for the Cardputer bridge."""
 
-from __future__ import annotations
-
+from pathlib import Path
 from typing import Annotated
 
 import typer
 from rich.console import Console
 from rich.table import Table
 
-from .models import CarrierTestRequest
+from .models import CarrierTestRequest, PricerFrameRequest
 from .protocol import Command
 from .transport import BridgeError, BridgeTransport, candidate_ports, discover_bridge
 
@@ -84,6 +83,57 @@ def carrier_test(
     console.print(
         f"[green]Carrier test completed locally:[/green] {frequency_hz} Hz, "
         f"{duration_us} us, {duty_percent}% duty."
+    )
+    console.print("This does not prove that the ESL received the signal.")
+
+
+@app.command("send-frame")
+def send_frame(
+    frame_path: Annotated[
+        Path,
+        typer.Argument(
+            exists=True,
+            dir_okay=False,
+            readable=True,
+            help="Path to raw binary Pricer frame file",
+        ),
+    ],
+    port: PortOption,
+    modulation: Annotated[
+        int, typer.Option("--modulation", help="Modulation scheme (4 for PP4, 16 for PP16)")
+    ] = 16,
+    repeats: Annotated[
+        int, typer.Option("--repeats", min=1, max=100, help="Number of frame repetitions")
+    ] = 1,
+    inter_repeat_gap_us: Annotated[
+        int,
+        typer.Option(
+            "--inter-repeat-gap-us",
+            min=0,
+            max=1_000_000,
+            help="Gap between repetitions in microseconds",
+        ),
+    ] = 0,
+    timeout: TimeoutOption = 3.0,
+) -> None:
+    """Send a raw Pricer frame over IR using the specified modulation."""
+    try:
+        frame_bytes = frame_path.read_bytes()
+        request = PricerFrameRequest(
+            frame=frame_bytes,
+            modulation=modulation,
+            repeats=repeats,
+            inter_repeat_gap_us=inter_repeat_gap_us,
+        )
+        with BridgeTransport.open(port, timeout_s=timeout) as bridge:
+            bridge.request(Command.SEND_PRICER_FRAME, request.encode())
+    except Exception as exc:
+        console.print(f"[red]Send frame failed:[/red] {exc}")
+        raise typer.Exit(code=2) from exc
+
+    console.print(
+        f"[green]Raw Pricer frame transmitted locally:[/green] modulation=PP{modulation}, "
+        f"length={len(frame_bytes)} bytes, repeats={repeats}, gap={inter_repeat_gap_us} us."
     )
     console.print("This does not prove that the ESL received the signal.")
 

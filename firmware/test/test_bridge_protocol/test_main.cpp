@@ -249,6 +249,24 @@ void test_successful_recovery_afterward(void) {
     TEST_ASSERT_EQUAL_UINT16(300, parser.message().sequence);
     TEST_ASSERT_EQUAL(static_cast<int>(Status::kOk), static_cast<int>(parser.error()));
 }
+void test_send_pricer_frame_parsing(void) {
+    StreamParser parser;
+    std::uint32_t now = 10000;
+    // Payload: modulation=16, reserved=0, repeats=2, inter_repeat_gap_us=500, frame_len=4, frame=0x12 0x34 0x56 0x78
+    std::vector<std::uint8_t> payload = {
+        16, 0, 2, 0, 0xF4, 0x01, 0, 0, 4, 0, 0x12, 0x34, 0x56, 0x78
+    };
+    auto frame = make_frame(Command::kSendPricerFrame, 555, Status::kOk, payload);
+
+    StreamParser::Result last_res = StreamParser::Result::kNeedMoreData;
+    for (auto b : frame) {
+        last_res = parser.push(b, now);
+    }
+    TEST_ASSERT_EQUAL(static_cast<int>(StreamParser::Result::kMessageReady), static_cast<int>(last_res));
+    TEST_ASSERT_EQUAL_UINT8(static_cast<std::uint8_t>(Command::kSendPricerFrame), static_cast<std::uint8_t>(parser.message().command));
+    TEST_ASSERT_EQUAL_UINT16(555, parser.message().sequence);
+    TEST_ASSERT_EQUAL(14, parser.message().payload.size());
+}
 
 void run_all_tests(void) {
     UNITY_BEGIN();
@@ -260,6 +278,7 @@ void run_all_tests(void) {
     RUN_TEST(test_crc_and_version_errors_with_context);
     RUN_TEST(test_timeout_via_poll);
     RUN_TEST(test_successful_recovery_afterward);
+    RUN_TEST(test_send_pricer_frame_parsing);
     UNITY_END();
 }
 

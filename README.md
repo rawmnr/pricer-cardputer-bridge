@@ -2,7 +2,7 @@
 
 Experimental USB-to-infrared bridge that uses an **M5Stack Cardputer-Adv** as the IR transmitter for Pricer electronic shelf labels (ESLs), with a **Windows host** performing image preparation and Pricer frame generation.
 
-> **Status:** research scaffold. USB framing and a bounded carrier-test path are scaffolded; PP16 encoding and validated ESL image transfer are not implemented yet.
+> **Status:** research implementation. USB framing, bounded carrier-test, provisional PP16 symbol encoding, and bounded raw-frame transmission are implemented and tested in software. Physical carrier accuracy, optical emission, PP16 timing on this Cardputer, and validated ESL image transfer remain unverified.
 
 ## Goal
 
@@ -156,7 +156,7 @@ Implemented scaffold commands:
 - `HELLO`: firmware identity and capabilities.
 - `GET_STATUS`: last command and transmitter status.
 - `CARRIER_TEST`: bounded burst for optical smoke tests.
-- `SEND_PRICER_FRAME`: reserved; returns `NOT_IMPLEMENTED` until the PP16 encoder is validated.
+- `SEND_PRICER_FRAME`: raw PP16 frame transmission via RMT; PP4 returns `NOT_IMPLEMENTED`.
 
 ## Development sequence
 

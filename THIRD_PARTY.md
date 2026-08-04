@@ -17,6 +17,24 @@ Before adapting PrecIR code:
 5. update this document and the relevant source headers;
 6. verify that the resulting distribution remains GPL-3.0 compliant.
 
+### T006 timing-data provenance
+
+- Pinned source commit: `b09951e2b3d2741e4ca08f929eafef849f6fc006`
+- Source file inspected: `hardware/esl_blaster/FW02/Src/main.c`
+- Related timing revision: `a8b79332bab78e7bd144465052c045807adc1f38`
+- Additional source: https://www.furrtek.org/index.php?a=esl
+- Adaptation: the project reproduces the published 16-entry PP16 nibble-duration table and 21 us burst width as data in `pc/src/eslbridge/pp16.py` and `firmware/include/pp16_encoder.hpp`; no PrecIR source code was copied.
+- Change note: added 2026-08-04; values remain provisional for this Cardputer/target-ESL setup pending T005 and physical PP16 validation.
+
+### T008 PrecIR adapter provenance & license audit
+
+- Pinned source commit: `b09951e2b3d2741e4ca08f929eafef849f6fc006`
+- Source file inspected: `tools_python/pr.py` (`terminate_frame` / `crc16`)
+- Additional source: https://www.furrtek.org/index.php?a=esl
+- Upstream repository: https://github.com/furrtek/PrecIR
+- License: GNU General Public License v3.0 (GPL-3.0-only)
+- Adaptation: clean-room Python adapter implementation (`pc/src/eslbridge/precir.py`) exposing deterministic CRC16 calculation (polynomial 0x8408, init 0x8408 over raw payload), PP16 header placement (`0x00, 0x00, 0x00, 0x40` prefix), little-endian CRC16 trailer placement, frame finalization (`finalize_precir_frame`), and repeat metadata separation helper (`build_pricer_frame_request`). No PrecIR source code was copied or vendored.
+- Change note: added 2026-08-04; framing and CRC implementation remain provisional and UNTESTED against physical Pricer ESL target tags in this setup. No claim of tag or physical carrier compatibility is made.
 ## M5Cardputer library
 
 - Project: `m5stack/M5Cardputer`

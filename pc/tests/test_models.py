@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import pytest
 
-from eslbridge.models import CarrierTestRequest, HelloInfo
+from eslbridge.models import CarrierTestRequest, HelloInfo, PricerFrameRequest
 from eslbridge.protocol import ProtocolError
 from eslbridge.transport import InvalidDeviceError
 
@@ -90,3 +90,61 @@ def test_hello_invalid_identity_raises_invalid_device_error(invalid_info: HelloI
     with pytest.raises(InvalidDeviceError) as exc_info:
         invalid_info.validate_identity(port="COM7")
     assert "COM7" in str(exc_info.value)
+
+
+def test_pricer_frame_request_encoding_valid() -> None:
+    frame_bytes = b"\x01\x02\x03\x04"
+    req = PricerFrameRequest(
+        frame=frame_bytes,
+        modulation=16,
+        repeats=3,
+        inter_repeat_gap_us=500,
+    )
+    encoded = req.encode()
+    assert len(encoded) == 10 + 4
+    assert encoded[0] == 16  # modulation
+    assert encoded[1] == 0  # reserved
+    assert int.from_bytes(encoded[2:4], "little") == 3  # repeats
+    assert int.from_bytes(encoded[4:8], "little") == 500  # inter_repeat_gap_us
+    assert int.from_bytes(encoded[8:10], "little") == 4  # frame_length
+    assert encoded[10:] == frame_bytes
+
+
+def test_pricer_frame_request_accepted_min_max_boundaries() -> None:
+    min_req = PricerFrameRequest(
+        frame=b"\xff",
+        modulation=4,
+        repeats=1,
+        inter_repeat_gap_us=0,
+    )
+    encoded_min = min_req.encode()
+    assert len(encoded_min) == 11
+
+    max_req = PricerFrameRequest(
+        frame=b"\xaa" * 256,
+        modulation=16,
+        repeats=100,
+        inter_repeat_gap_us=1_000_000,
+    )
+    encoded_max = max_req.encode()
+    assert len(encoded_max) == 10 + 256
+
+
+@pytest.mark.parametrize(
+    "invalid_req",
+    [
+        PricerFrameRequest(frame=b"\x01", modulation=0),
+        PricerFrameRequest(frame=b"\x01", modulation=5),
+        PricerFrameRequest(frame=b"\x01", reserved=1),
+        PricerFrameRequest(frame=b"\x01", repeats=0),
+        PricerFrameRequest(frame=b"\x01", repeats=101),
+        PricerFrameRequest(frame=b"\x01", inter_repeat_gap_us=1_000_001),
+        PricerFrameRequest(frame=b""),
+        PricerFrameRequest(frame=b"\x01" * 257),
+    ],
+)
+def test_pricer_frame_request_invalid_parameters_raise_protocol_error(
+    invalid_req: PricerFrameRequest,
+) -> None:
+    with pytest.raises(ProtocolError):
+        invalid_req.encode()

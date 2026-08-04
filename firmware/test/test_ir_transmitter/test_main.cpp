@@ -90,6 +90,28 @@ void test_carrier_burst_plan_uninterrupted_high_phases_when_split(void) {
         TEST_ASSERT_EQUAL_UINT32(50000, plan.first_ticks + plan.second_ticks);
     }
 }
+void test_valid_pricer_frame_request_boundaries(void) {
+    // Valid requests
+    TEST_ASSERT_TRUE(valid_pricer_frame_request(16, 1, 0, 10));
+    TEST_ASSERT_TRUE(valid_pricer_frame_request(4, 100, 1000000, 256));
+    TEST_ASSERT_TRUE(valid_pricer_frame_request(16, 50, 500, 1));
+
+    // Invalid modulation
+    TEST_ASSERT_FALSE(valid_pricer_frame_request(0, 1, 0, 10));
+    TEST_ASSERT_FALSE(valid_pricer_frame_request(5, 1, 0, 10));
+    TEST_ASSERT_FALSE(valid_pricer_frame_request(255, 1, 0, 10));
+
+    // Invalid repeats (0 or > 100)
+    TEST_ASSERT_FALSE(valid_pricer_frame_request(16, 0, 0, 10));
+    TEST_ASSERT_FALSE(valid_pricer_frame_request(16, 101, 0, 10));
+
+    // Invalid gap (> 1,000,000 us)
+    TEST_ASSERT_FALSE(valid_pricer_frame_request(16, 1, 1000001, 10));
+
+    // Invalid frame length (0 or > 256 bytes)
+    TEST_ASSERT_FALSE(valid_pricer_frame_request(16, 1, 0, 0));
+    TEST_ASSERT_FALSE(valid_pricer_frame_request(16, 1, 0, 257));
+}
 
 void run_all_tests(void) {
     UNITY_BEGIN();
@@ -98,6 +120,7 @@ void run_all_tests(void) {
     RUN_TEST(test_carrier_burst_plan_exact_totals);
     RUN_TEST(test_carrier_burst_plan_max_phase_width);
     RUN_TEST(test_carrier_burst_plan_uninterrupted_high_phases_when_split);
+    RUN_TEST(test_valid_pricer_frame_request_boundaries);
     UNITY_END();
 }
 

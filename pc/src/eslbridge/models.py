@@ -10,6 +10,15 @@ from .protocol import ProtocolError
 _HELLO = struct.Struct("<BBBBIHBB")
 _STATUS = struct.Struct("<BBBBI")
 _CARRIER_TEST = struct.Struct("<IIB3x")
+_PRICER_FRAME_HEADER = struct.Struct("<BBHIH")
+
+MODULATION_PP4 = 4
+MODULATION_PP16 = 16
+MIN_PRICER_FRAME_BYTES = 1
+MAX_PRICER_FRAME_BYTES = 256
+MIN_PRICER_REPEATS = 1
+MAX_PRICER_REPEATS = 100
+MAX_INTER_REPEAT_GAP_US = 1_000_000
 
 
 @dataclass(frozen=True, slots=True)
@@ -82,3 +91,42 @@ class CarrierTestRequest:
         if not 10 <= self.duty_percent <= 60:
             raise ProtocolError("duty cycle must be between 10 and 60 percent")
         return _CARRIER_TEST.pack(self.frequency_hz, self.duration_us, self.duty_percent)
+
+
+@dataclass(frozen=True, slots=True)
+class PricerFrameRequest:
+    frame: bytes
+    modulation: int = MODULATION_PP16
+    repeats: int = 1
+    inter_repeat_gap_us: int = 0
+    reserved: int = 0
+
+    def encode(self) -> bytes:
+        if self.modulation not in (MODULATION_PP4, MODULATION_PP16):
+            raise ProtocolError(f"modulation must be 4 (PP4) or 16 (PP16), got {self.modulation}")
+        if self.reserved != 0:
+            raise ProtocolError("reserved byte must be 0")
+        if not MIN_PRICER_REPEATS <= self.repeats <= MAX_PRICER_REPEATS:
+            raise ProtocolError(
+                "repeats must be between "
+                f"{MIN_PRICER_REPEATS} and {MAX_PRICER_REPEATS}, got {self.repeats}"
+            )
+        if not 0 <= self.inter_repeat_gap_us <= MAX_INTER_REPEAT_GAP_US:
+            raise ProtocolError(
+                "inter-repeat gap must be between "
+                f"0 and {MAX_INTER_REPEAT_GAP_US} us, got {self.inter_repeat_gap_us}"
+            )
+        if not MIN_PRICER_FRAME_BYTES <= len(self.frame) <= MAX_PRICER_FRAME_BYTES:
+            raise ProtocolError(
+                "frame length must be between "
+                f"{MIN_PRICER_FRAME_BYTES} and {MAX_PRICER_FRAME_BYTES} bytes, "
+                f"got {len(self.frame)}"
+            )
+        header = _PRICER_FRAME_HEADER.pack(
+            self.modulation,
+            self.reserved,
+            self.repeats,
+            self.inter_repeat_gap_us,
+            len(self.frame),
+        )
+        return header + self.frame
