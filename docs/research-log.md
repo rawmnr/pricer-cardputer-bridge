@@ -33,3 +33,14 @@ Source: https://github.com/furrtek/PrecIR
 - Wake-up repeat duration.
 - Image dimensions, bit-plane order, compression, and refresh command.
 - Whether the Cardputer built-in IR LED can deliver sufficient irradiance at 1.245 MHz.
+
+
+## 2026-08-04 - Pricer PP16 Protocol & Target Analysis
+
+Full report saved at [`docs/research/2026-08-04-pricer-pp16-protocol-analysis.md`](research/2026-08-04-pricer-pp16-protocol-analysis.md).
+
+### Key Findings:
+1. **MCU Subcommand Envelope Prefix Defect:** Stripping `0x34 0x00 0x00 0x00` in bench retest `T007` caused graphic ESL MCU image frames (`0x05`, `0x20`, `0x01`) to be dropped by the target tag. PrecIR source inspection (`tools_python/pr.py`) confirms `make_mcu_frame` requires `0x85 [PLID] 34 00 00 00 [CMD]`.
+2. **Target Model & Barcode PLID:** Marking `#19523-01` is a Pricer SmartTAG HD M+ Red ($208 \times 112$ pixels = 23,296 pixels at 110 DPI). Barcode `N4163114582613272` maps to 32-bit PLID `0x3FB7B302`, placed on the wire as bytes `[0x02, 0xB3, 0xB7, 0x3F]` (little-endian SSSSS followed by little-endian MMYWW).
+3. **Tricolor Dual-Bitplane Requirement:** The 3-color label requires two bitplane blocks (2,912-byte Black/White plane + 2,912-byte Red mask plane = 5,824 bytes total uncompressed).
+4. **Wake-up Duration:** Wake-up frame (`cmd 0x17`) must be transmitted continuously in a loop for up to 4 seconds before sending image frames.
