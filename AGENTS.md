@@ -173,3 +173,17 @@ Work in dependency order unless the issue explicitly says otherwise:
 11. `T010` tricolor image transfer and repeatability study.
 
 Do not implement `T002` before the application has been installed and booted through M5Launcher at least once. Do not implement `T009` or `T010` before `T005-T008` have evidence and tests.
+
+## Agent skills
+
+### Issue tracker
+
+Issues and PRDs live in GitHub Issues; use the `gh` CLI. See `docs/agents/issue-tracker.md`.
+
+### Triage labels
+
+Use the default labels `needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-human`, and `wontfix`. See `docs/agents/triage-labels.md`.
+
+### Domain docs
+
+This is a single-context repo: read root `CONTEXT.md` when present and system ADRs under `docs/adr/`. See `docs/agents/domain.md`.
