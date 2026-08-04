@@ -27,19 +27,20 @@ Status encode_frame(
         out_frame.total_duration_us += preamble.total_us();
     }
 
-    // Payload nibbles (high nibble first, then low nibble)
+    // PrecIR's transmitter emits the low nibble before the high nibble.
+    // The target ESL consumes each byte least-significant nibble first.
     for (std::size_t i = 0; i < payload_len; ++i) {
         const std::uint8_t byte_val = payload[i];
-        const std::uint8_t high_nibble = (byte_val >> 4) & 0x0F;
         const std::uint8_t low_nibble = byte_val & 0x0F;
-
-        const Pp16Symbol s_high = profile.symbol_timing(high_nibble);
-        out_frame.symbols[out_frame.symbol_count++] = s_high;
-        out_frame.total_duration_us += s_high.total_us();
+        const std::uint8_t high_nibble = (byte_val >> 4) & 0x0F;
 
         const Pp16Symbol s_low = profile.symbol_timing(low_nibble);
         out_frame.symbols[out_frame.symbol_count++] = s_low;
         out_frame.total_duration_us += s_low.total_us();
+
+        const Pp16Symbol s_high = profile.symbol_timing(high_nibble);
+        out_frame.symbols[out_frame.symbol_count++] = s_high;
+        out_frame.total_duration_us += s_high.total_us();
     }
 
     // Optional trailer

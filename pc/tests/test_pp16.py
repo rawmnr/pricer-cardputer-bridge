@@ -80,19 +80,19 @@ def test_nibble_gap_and_timing_mapping() -> None:
 def test_encode_single_and_multiple_bytes() -> None:
     profile = precir_pp16_profile()
 
-    # Payload 0x12 -> high nibble 1, low nibble 2 (no preamble/trailer by default)
+    # Payload 0x12 -> low nibble 2, high nibble 1 (no preamble/trailer by default)
     symbols = encode_pp16_symbols(b"\x12", profile)
     assert len(symbols) == 2
-    assert symbols[0] == profile.symbol_timing(1)
-    assert symbols[1] == profile.symbol_timing(2)
+    assert symbols[0] == profile.symbol_timing(2)
+    assert symbols[1] == profile.symbol_timing(1)
 
-    # Payload 0xA5 0x0F -> (10, 5), (0, 15)
+    # Payload 0xA5 0x0F -> (5, 10), (15, 0)
     symbols_multi = encode_pp16_symbols(b"\xa5\x0f", profile)
     assert len(symbols_multi) == 4
-    assert symbols_multi[0] == profile.symbol_timing(10)
-    assert symbols_multi[1] == profile.symbol_timing(5)
-    assert symbols_multi[2] == profile.symbol_timing(0)
-    assert symbols_multi[3] == profile.symbol_timing(15)
+    assert symbols_multi[0] == profile.symbol_timing(5)
+    assert symbols_multi[1] == profile.symbol_timing(10)
+    assert symbols_multi[2] == profile.symbol_timing(15)
+    assert symbols_multi[3] == profile.symbol_timing(0)
 
     profile_pt = PP16TimingProfile(
         preamble_burst_us=500,
@@ -103,8 +103,8 @@ def test_encode_single_and_multiple_bytes() -> None:
     symbols_pt = encode_pp16_symbols(b"\x12", profile_pt)
     assert len(symbols_pt) == 4
     assert symbols_pt[0] == SymbolTiming(500, 500)
-    assert symbols_pt[1] == profile_pt.symbol_timing(1)
-    assert symbols_pt[2] == profile_pt.symbol_timing(2)
+    assert symbols_pt[1] == profile_pt.symbol_timing(2)
+    assert symbols_pt[2] == profile_pt.symbol_timing(1)
     assert symbols_pt[3] == SymbolTiming(200, 500)
 
 

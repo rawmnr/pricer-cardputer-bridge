@@ -147,7 +147,7 @@ Each 4-bit nibble $n \in [0, 15]$ maps directly to a 16-entry total symbol durat
 
 ### Byte & Symbol Mapping
 
-1. Each payload byte is split into high-nibble `(byte >> 4) & 0x0F` then low-nibble `byte & 0x0F`.
+1. Each payload byte is split into low-nibble `byte & 0x0F` then high-nibble `(byte >> 4) & 0x0F`, matching the PrecIR transmitter's least-significant-nibble-first order.
 2. Each nibble $n$ emits an IR carrier burst of `symbol_burst_us` (21 us) followed by space/gap of `nibble_durations_us[n] - symbol_burst_us`.
 3. Optional preamble and trailer symbols may be configured if required by future tag profiles; by default, no preamble/trailer is assumed.
 

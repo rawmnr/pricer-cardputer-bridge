@@ -178,14 +178,16 @@ def encode_pp16_symbols(
     if profile.preamble_burst_us > 0:
         symbols.append(SymbolTiming(profile.preamble_burst_us, profile.preamble_gap_us))
 
+    # PrecIR's transmitter emits the low nibble before the high nibble.
+    # The target ESL consumes each byte least-significant nibble first.
     for byte_val in payload:
         if not (0 <= byte_val <= 255):
             raise PP16EncoderError(f"byte value {byte_val} out of range 0..255")
-        high_nibble = (byte_val >> 4) & 0x0F
         low_nibble = byte_val & 0x0F
+        high_nibble = (byte_val >> 4) & 0x0F
 
-        symbols.append(profile.symbol_timing(high_nibble))
         symbols.append(profile.symbol_timing(low_nibble))
+        symbols.append(profile.symbol_timing(high_nibble))
 
     if profile.trailer_burst_us > 0:
         symbols.append(SymbolTiming(profile.trailer_burst_us, profile.trailer_gap_us))

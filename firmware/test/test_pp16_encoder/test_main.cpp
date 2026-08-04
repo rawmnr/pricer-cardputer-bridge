@@ -57,19 +57,19 @@ void test_nibble_gap_calculation(void) {
 void test_encode_single_byte(void) {
     TimingProfile profile = make_provisional_profile();
     EncodedFrame frame{};
-    std::uint8_t payload[1] = {0x12};  // high = 1, low = 2
+    std::uint8_t payload[1] = {0x12};  // low = 2, high = 1
 
     Status status = encode_frame(payload, 1, profile, frame);
     TEST_ASSERT_EQUAL(static_cast<int>(Status::kOk), static_cast<int>(status));
     TEST_ASSERT_EQUAL_UINT32(2, frame.symbol_count);
 
-    // 0: High nibble (1)
+    // 0: Low nibble (2)
     TEST_ASSERT_EQUAL_UINT32(21, frame.symbols[0].burst_us);
-    TEST_ASSERT_EQUAL_UINT32(profile.symbol_gap_us(1), frame.symbols[0].gap_us);
+    TEST_ASSERT_EQUAL_UINT32(profile.symbol_gap_us(2), frame.symbols[0].gap_us);
 
-    // 1: Low nibble (2)
+    // 1: High nibble (1)
     TEST_ASSERT_EQUAL_UINT32(21, frame.symbols[1].burst_us);
-    TEST_ASSERT_EQUAL_UINT32(profile.symbol_gap_us(2), frame.symbols[1].gap_us);
+    TEST_ASSERT_EQUAL_UINT32(profile.symbol_gap_us(1), frame.symbols[1].gap_us);
 
     std::uint32_t expected_total = frame.symbols[0].total_us() + frame.symbols[1].total_us();
     TEST_ASSERT_EQUAL_UINT32(expected_total, frame.total_duration_us);
