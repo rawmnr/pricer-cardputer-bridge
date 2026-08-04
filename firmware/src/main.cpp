@@ -1,7 +1,6 @@
 #include <Arduino.h>
 
 #include <array>
-#include <span>
 
 #include "app_config.hpp"
 #include "bridge_protocol.hpp"
@@ -27,9 +26,13 @@ void send_response(
     const Command command,
     const Status status,
     const std::uint16_t sequence,
-    const std::span<const std::uint8_t> payload = {}) {
+    const eslbridge::protocol::ByteView payload = {}) {
     const auto length = eslbridge::protocol::encode_response(
-        response_buffer, command, status, sequence, payload);
+        eslbridge::protocol::MutableByteView(response_buffer.data(), response_buffer.size()),
+        command,
+        status,
+        sequence,
+        payload);
     if (length > 0) {
         Serial.write(response_buffer.data(), length);
         Serial.flush();
@@ -59,7 +62,11 @@ void handle_message(const eslbridge::protocol::MessageView& message) {
                 static_cast<std::uint16_t>(eslbridge::config::kMaxPayload));
             payload[10] = eslbridge::config::kIrGpio;
             payload[11] = 0;
-            send_response(message.command, Status::kOk, message.sequence, payload);
+            send_response(
+                message.command,
+                Status::kOk,
+                message.sequence,
+                eslbridge::protocol::ByteView(payload.data(), payload.size()));
             break;
         }
 
@@ -75,7 +82,11 @@ void handle_message(const eslbridge::protocol::MessageView& message) {
             payload[2] = static_cast<std::uint8_t>(device_status.last_error);
             payload[3] = 0;
             eslbridge::protocol::write_u32_le(payload.data() + 4, transmitter.tx_count());
-            send_response(message.command, Status::kOk, message.sequence, payload);
+            send_response(
+                message.command,
+                Status::kOk,
+                message.sequence,
+                eslbridge::protocol::ByteView(payload.data(), payload.size()));
             break;
         }
 

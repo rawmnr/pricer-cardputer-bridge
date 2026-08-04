@@ -19,15 +19,15 @@ jobs:
           enable-cache: true
           cache-dependency-glob: "pc/uv.lock"
       - name: Sync
-        run: uv sync --project .\pc --all-groups
+        run: uv sync --project .\pc --all-groups --frozen
       - name: Ruff
-        run: uv run --project .\pc ruff check .\pc
+        run: uv run --frozen --project .\pc ruff check .\pc
       - name: Format
-        run: uv run --project .\pc ruff format --check .\pc
+        run: uv run --frozen --project .\pc ruff format --check .\pc
       - name: Mypy
-        run: uv run --project .\pc mypy .\pc\src
+        run: uv run --frozen --project .\pc mypy .\pc\src
       - name: Tests
-        run: uv run --project .\pc pytest
+        run: uv run --frozen --project .\pc pytest
 
   firmware:
     runs-on: ubuntu-latest

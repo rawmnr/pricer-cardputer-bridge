@@ -139,3 +139,16 @@ If Launcher or the flash layout is damaged:
 5. reinstall M5Launcher if it was the desired previous environment.
 
 Recovery is a fallback. It is not evidence that the application deployment path works correctly.
+
+## Dependency pins and update policy
+
+### Python host environment (`pc/`)
+- Dependencies are declared in `pc/pyproject.toml` targeting Python 3.12+.
+- Committed lockfile `pc/uv.lock` is generated via `uv lock --project pc` and verified in CI using `uv sync --project pc --all-groups --frozen`.
+- **Update Policy:** Changes to host dependencies must be declared in `pc/pyproject.toml` and locked into `pc/uv.lock`. Pull requests and CI runs must use `--frozen` sync to prevent unexpected dependency drift.
+
+### PlatformIO firmware environment (`firmware/`)
+- Built using PlatformIO environment `m5stack-cardputer-adv`.
+- Core toolchain platform is pinned in `firmware/platformio.ini`: `espressif32@6.7.0`.
+- External libraries are pinned to explicit git commit hashes (e.g. `M5Cardputer=https://github.com/m5stack/M5Cardputer.git#f1392858b9994c3547120e602a57d3553d16ab01`).
+- **Update Policy:** Firmware dependencies must be pinned to explicit tags or git commit SHAs in `platformio.ini`. Unpinned library versions or unpinned platforms are prohibited.

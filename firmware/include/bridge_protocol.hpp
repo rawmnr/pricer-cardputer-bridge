@@ -3,11 +3,44 @@
 #include <array>
 #include <cstddef>
 #include <cstdint>
-#include <span>
 
 #include "app_config.hpp"
 
 namespace eslbridge::protocol {
+
+class ByteView {
+public:
+    constexpr ByteView() = default;
+    constexpr ByteView(const std::uint8_t* data, const std::size_t size) : data_(data), size_(size) {}
+
+    constexpr const std::uint8_t* data() const { return data_; }
+    constexpr std::size_t size() const { return size_; }
+    constexpr bool empty() const { return size_ == 0; }
+    constexpr const std::uint8_t* begin() const { return data_; }
+    constexpr const std::uint8_t* end() const { return data_ + size_; }
+    constexpr std::uint8_t operator[](const std::size_t index) const { return data_[index]; }
+
+private:
+    const std::uint8_t* data_{nullptr};
+    std::size_t size_{0};
+};
+
+class MutableByteView {
+public:
+    constexpr MutableByteView() = default;
+    constexpr MutableByteView(std::uint8_t* data, const std::size_t size) : data_(data), size_(size) {}
+
+    constexpr std::uint8_t* data() const { return data_; }
+    constexpr std::size_t size() const { return size_; }
+    constexpr std::uint8_t* begin() const { return data_; }
+    constexpr std::uint8_t* end() const { return data_ + size_; }
+    constexpr std::uint8_t& operator[](const std::size_t index) const { return data_[index]; }
+
+private:
+    std::uint8_t* data_{nullptr};
+    std::size_t size_{0};
+};
+
 
 inline constexpr std::array<std::uint8_t, 4> kMagic{'E', 'S', 'L', 'I'};
 inline constexpr std::size_t kHeaderSize = 12;
@@ -47,7 +80,7 @@ struct MessageView {
     std::uint8_t flags{};
     Status status{};
     std::uint16_t sequence{};
-    std::span<const std::uint8_t> payload{};
+    ByteView payload{};
 };
 
 struct DeviceStatus {
@@ -57,7 +90,7 @@ struct DeviceStatus {
     std::uint32_t tx_count{0};
 };
 
-std::uint32_t crc32(std::span<const std::uint8_t> data);
+std::uint32_t crc32(ByteView data);
 std::uint16_t read_u16_le(const std::uint8_t* data);
 std::uint32_t read_u32_le(const std::uint8_t* data);
 void write_u16_le(std::uint8_t* data, std::uint16_t value);
@@ -90,10 +123,10 @@ private:
 };
 
 std::size_t encode_response(
-    std::span<std::uint8_t> output,
+    MutableByteView output,
     Command command,
     Status status,
     std::uint16_t sequence,
-    std::span<const std::uint8_t> payload);
+    ByteView payload);
 
 }  // namespace eslbridge::protocol

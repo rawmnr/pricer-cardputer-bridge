@@ -6,7 +6,7 @@ import itertools
 import time
 from collections.abc import Callable
 from dataclasses import dataclass, field
-from typing import Protocol
+from typing import Protocol, cast
 
 from .protocol import MAGIC, Command, Message, ProtocolError, Status, decode_message, encode_message
 
@@ -38,8 +38,9 @@ class BridgeTransport:
         try:
             import serial
 
-            connection = serial.Serial(
-                port=port, baudrate=115200, timeout=0.05, write_timeout=1.0
+            connection = cast(
+                SerialLike,
+                serial.Serial(port=port, baudrate=115200, timeout=0.05, write_timeout=1.0),
             )
         except ImportError as exc:
             raise RuntimeError("pyserial is required for real serial connections") from exc
@@ -92,7 +93,7 @@ class BridgeTransport:
             magic_index = buffer.find(MAGIC)
             if magic_index < 0:
                 if len(buffer) > len(MAGIC):
-                    del buffer[:-len(MAGIC) + 1]
+                    del buffer[: -len(MAGIC) + 1]
                 continue
             if magic_index > 0:
                 del buffer[:magic_index]

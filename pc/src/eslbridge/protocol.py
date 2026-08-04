@@ -62,14 +62,17 @@ def encode_message(message: Message) -> bytes:
     if not 0 <= message.flags <= 0xFF:
         raise ProtocolError("flags must fit in uint8")
 
-    body = _HEADER_WITHOUT_MAGIC.pack(
-        message.version,
-        int(message.command),
-        message.flags,
-        int(message.status),
-        message.sequence,
-        len(message.payload),
-    ) + message.payload
+    body = (
+        _HEADER_WITHOUT_MAGIC.pack(
+            message.version,
+            int(message.command),
+            message.flags,
+            int(message.status),
+            message.sequence,
+            len(message.payload),
+        )
+        + message.payload
+    )
     checksum = zlib.crc32(body) & 0xFFFFFFFF
     return MAGIC + body + _CRC.pack(checksum)
 

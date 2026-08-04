@@ -9,7 +9,7 @@ constexpr std::uint32_t kCrcPolynomial = 0xEDB88320U;
 
 }  // namespace
 
-std::uint32_t crc32(const std::span<const std::uint8_t> data) {
+std::uint32_t crc32(const ByteView data) {
     std::uint32_t crc = 0xFFFFFFFFU;
     for (const auto byte : data) {
         crc ^= byte;
@@ -117,7 +117,7 @@ StreamParser::Result StreamParser::push(const std::uint8_t byte, const std::uint
 bool StreamParser::decode_current_frame() {
     const auto payload_length = read_u16_le(buffer_.data() + 10);
     const auto expected_crc = read_u32_le(buffer_.data() + kHeaderSize + payload_length);
-    const auto actual_crc = crc32(std::span<const std::uint8_t>(buffer_.data() + 4, 8 + payload_length));
+    const auto actual_crc = crc32(ByteView(buffer_.data() + 4, 8 + payload_length));
 
     if (buffer_[4] != config::kProtocolVersion) {
         error_ = Status::kBadVersion;
@@ -133,17 +133,17 @@ bool StreamParser::decode_current_frame() {
     message_.flags = buffer_[6];
     message_.status = static_cast<Status>(buffer_[7]);
     message_.sequence = read_u16_le(buffer_.data() + 8);
-    message_.payload = std::span<const std::uint8_t>(buffer_.data() + kHeaderSize, payload_length);
+    message_.payload = ByteView(buffer_.data() + kHeaderSize, payload_length);
     error_ = Status::kOk;
     return true;
 }
 
 std::size_t encode_response(
-    const std::span<std::uint8_t> output,
+    const MutableByteView output,
     const Command command,
     const Status status,
     const std::uint16_t sequence,
-    const std::span<const std::uint8_t> payload) {
+    const ByteView payload) {
     const std::size_t required = kHeaderSize + payload.size() + kCrcSize;
     if (output.size() < required || payload.size() > config::kMaxPayload) {
         return 0;
@@ -158,7 +158,7 @@ std::size_t encode_response(
     write_u16_le(output.data() + 10, static_cast<std::uint16_t>(payload.size()));
     std::copy(payload.begin(), payload.end(), output.begin() + static_cast<std::ptrdiff_t>(kHeaderSize));
 
-    const auto checksum = crc32(std::span<const std::uint8_t>(output.data() + 4, 8 + payload.size()));
+    const auto checksum = crc32(ByteView(output.data() + 4, 8 + payload.size()));
     write_u32_le(output.data() + kHeaderSize + payload.size(), checksum);
     return required;
 }

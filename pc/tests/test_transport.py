@@ -26,7 +26,12 @@ class FakeSerial:
     def write(self, data: bytes) -> int:
         self.outgoing.extend(data)
         request = decode_message(data)
-        payload = bytes([1, 0, 1, 0]) + (9).to_bytes(4, "little") + (4096).to_bytes(2, "little") + bytes([44, 0])
+        payload = (
+            bytes([1, 0, 1, 0])
+            + (9).to_bytes(4, "little")
+            + (4096).to_bytes(2, "little")
+            + bytes([44, 0])
+        )
         self.incoming.extend(
             encode_message(
                 Message(
