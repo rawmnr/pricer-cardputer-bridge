@@ -5,7 +5,8 @@
 
 #include <driver/rmt.h>
 #include <esp_err.h>
-
+#include <freertos/FreeRTOS.h>
+#include <freertos/task.h>
 #include "app_config.hpp"
 
 namespace eslbridge {
@@ -16,6 +17,7 @@ constexpr std::uint8_t kClockDivider = 8;  // 80 MHz APB / 8 = 10 MHz, 0.1 us pe
 constexpr std::uint32_t kTicksPerMicrosecond = 10;
 constexpr std::uint32_t kMaxItemTicks = 32767;
 constexpr std::uint32_t kApbClockHz = 80'000'000;
+constexpr std::uint32_t kSchedulingMarginMs = 50;
 
 struct CarrierTicks {
     std::uint16_t high;
@@ -71,9 +73,7 @@ protocol::Status IrTransmitter::carrier_test(
     if (state_ == protocol::TransmitterState::kBusy) {
         return protocol::Status::kBusy;
     }
-    if (frequency_hz < config::kMinCarrierHz || frequency_hz > config::kMaxCarrierHz ||
-        duration_us == 0 || duration_us > config::kMaxCarrierTestUs ||
-        duty_percent < config::kMinDutyPercent || duty_percent > config::kMaxDutyPercent) {
+    if (!detail::valid_carrier_request(frequency_hz, duration_us, duty_percent)) {
         return protocol::Status::kInvalidArgument;
     }
 
@@ -85,32 +85,35 @@ protocol::Status IrTransmitter::carrier_test(
         return protocol::Status::kHardwareError;
     }
 
-    std::array<rmt_item32_t, 2> items{};
-    std::uint32_t remaining_ticks = duration_us * kTicksPerMicrosecond;
-    std::size_t item_count = 0;
+    const auto plan = detail::make_carrier_burst_plan(duration_us);
+    rmt_item32_t item{};
+    item.level0 = 1;
+    item.duration0 = plan.first_ticks;
+    item.level1 = plan.second_ticks > 0 ? 1 : 0;
+    item.duration1 = plan.second_ticks;
 
-    while (remaining_ticks > 0 && item_count < items.size()) {
-        const auto high_ticks = std::min(remaining_ticks, kMaxItemTicks);
-        remaining_ticks -= high_ticks;
-        const auto low_ticks = remaining_ticks > 0 ? 1U : 1U;
-        items[item_count].level0 = 1;
-        items[item_count].duration0 = high_ticks;
-        items[item_count].level1 = 0;
-        items[item_count].duration1 = low_ticks;
-        ++item_count;
-    }
-
-    if (remaining_ticks > 0) {
-        state_ = protocol::TransmitterState::kIdle;
-        return protocol::Status::kInvalidArgument;
-    }
-
-    const auto error = rmt_write_items(kRmtChannel, items.data(), item_count, true);
-    state_ = error == ESP_OK ? protocol::TransmitterState::kIdle : protocol::TransmitterState::kFault;
-    if (error != ESP_OK) {
+    const auto write_err = rmt_write_items(kRmtChannel, &item, 1, false);
+    if (write_err != ESP_OK) {
+        state_ = protocol::TransmitterState::kFault;
         return protocol::Status::kHardwareError;
     }
 
+    const std::uint32_t duration_ms = (duration_us + 999U) / 1000U;
+    const TickType_t wait_ticks = pdMS_TO_TICKS(duration_ms + kSchedulingMarginMs);
+
+    const auto wait_err = rmt_wait_tx_done(kRmtChannel, wait_ticks);
+    if (wait_err == ESP_ERR_TIMEOUT) {
+        rmt_tx_stop(kRmtChannel);
+        state_ = protocol::TransmitterState::kFault;
+        return protocol::Status::kTimeout;
+    }
+    if (wait_err != ESP_OK) {
+        rmt_tx_stop(kRmtChannel);
+        state_ = protocol::TransmitterState::kFault;
+        return protocol::Status::kHardwareError;
+    }
+
+    state_ = protocol::TransmitterState::kIdle;
     ++tx_count_;
     return protocol::Status::kOk;
 }

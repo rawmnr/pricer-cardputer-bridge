@@ -71,15 +71,16 @@ Request payload:
 
 | Field | Size | Meaning |
 |---|---:|---|
-| frequency_hz | 4 | requested carrier frequency |
+| frequency_hz | 4 | requested carrier frequency (500,000..2,000,000 Hz) |
 | duration_us | 4 | requested burst duration, max 5000 us |
 | duty_percent | 1 | 10..60 |
 | reserved | 3 | zero |
 
-The device rejects unsafe values. The initial host defaults are 1,245,000 Hz, 2,000 us, and 50%.
+The device rejects unsafe values outside allowed frequency (500,000 Hz .. 2,000,000 Hz), duration (1 us .. 5000 us), or duty percent (10% .. 60%). The initial host defaults are 1,245,000 Hz, 2,000 us, and 50%.
+
+The 5000 us duration limit applies to the complete scheduled RMT envelope with no extra trailing interval. After burst completion or operation timeout, output returns to idle low. Carrier transmission wait is bounded (`rmt_wait_tx_done`), and `TIMEOUT` (`0x0A`) is returned as a distinct status error if the transmission wait deadline expires. Hardware output frequency/optical characteristics remain uncalibrated without external measurement; no claim is made regarding measured frequency or optical output power.
 
 Response payload is empty on success.
-
 ### `0x11 SEND_PRICER_FRAME`
 
 Reserved payload shape:

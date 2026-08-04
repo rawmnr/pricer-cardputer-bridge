@@ -8,21 +8,37 @@ from eslbridge.transport import InvalidDeviceError
 
 
 def test_carrier_request_is_12_bytes() -> None:
-    assert len(CarrierTestRequest().encode()) == 12
+    encoded = CarrierTestRequest().encode()
+    assert len(encoded) == 12
+    assert encoded[9:12] == b"\x00\x00\x00"
 
 
 @pytest.mark.parametrize(
     "carrier_request",
     [
+        CarrierTestRequest(frequency_hz=499_999),
+        CarrierTestRequest(frequency_hz=2_000_001),
         CarrierTestRequest(duration_us=0),
         CarrierTestRequest(duration_us=5001),
-        CarrierTestRequest(frequency_hz=100_000),
-        CarrierTestRequest(duty_percent=100),
+        CarrierTestRequest(duty_percent=9),
+        CarrierTestRequest(duty_percent=61),
     ],
 )
 def test_unsafe_carrier_request_is_rejected(carrier_request: CarrierTestRequest) -> None:
     with pytest.raises(ProtocolError):
         carrier_request.encode()
+
+
+def test_carrier_request_accepted_min_max_boundaries() -> None:
+    min_req = CarrierTestRequest(frequency_hz=500_000, duration_us=1, duty_percent=10)
+    encoded_min = min_req.encode()
+    assert len(encoded_min) == 12
+    assert encoded_min[9:12] == b"\x00\x00\x00"
+
+    max_req = CarrierTestRequest(frequency_hz=2_000_000, duration_us=5000, duty_percent=60)
+    encoded_max = max_req.encode()
+    assert len(encoded_max) == 12
+    assert encoded_max[9:12] == b"\x00\x00\x00"
 
 
 def test_hello_decode_and_identity_valid() -> None:
