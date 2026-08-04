@@ -103,11 +103,16 @@ public:
         kMessageReady,
         kDiscardedNoise,
         kFrameError,
+        kTimeout,
     };
 
     Result push(std::uint8_t byte, std::uint32_t now_ms);
+    Result poll(std::uint32_t now_ms);
     const MessageView& message() const { return message_; }
     Status error() const { return error_; }
+    bool has_error_context() const { return has_error_context_; }
+    Command error_command() const { return error_command_; }
+    std::uint16_t error_sequence() const { return error_sequence_; }
     void reset();
 
 private:
@@ -120,6 +125,9 @@ private:
     std::uint32_t last_byte_ms_{0};
     MessageView message_{};
     Status error_{Status::kOk};
+    bool has_error_context_{false};
+    Command error_command_{Command::kHello};
+    std::uint16_t error_sequence_{0};
 };
 
 std::size_t encode_response(

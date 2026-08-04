@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import itertools
+import struct
 import time
 from collections.abc import Callable
 from dataclasses import dataclass, field
@@ -11,6 +12,8 @@ from typing import Protocol, cast
 from .models import HelloInfo
 from .protocol import (
     MAGIC,
+    MAX_FRAME_SIZE,
+    MAX_PAYLOAD,
     Command,
     CrcMismatchError,
     Message,
@@ -78,6 +81,7 @@ class BridgeTransport:
     serial_port: SerialLike
     timeout_s: float = 3.0
     _sequences: itertools.count = field(default_factory=lambda: itertools.count(1), init=False)
+    _recv_buffer: bytearray = field(default_factory=bytearray, init=False)
     clock: Callable[[], float] = time.monotonic
 
     @classmethod
@@ -171,32 +175,54 @@ class BridgeTransport:
             raise DeviceStatusError(command, response.status)
         return response
 
+    def _trim_noise(self) -> None:
+        idx = self._recv_buffer.find(MAGIC)
+        if idx >= 0:
+            if idx > 0:
+                del self._recv_buffer[:idx]
+            return
+        for prefix_len in (3, 2, 1):
+            prefix = MAGIC[:prefix_len]
+            if self._recv_buffer.endswith(prefix):
+                del self._recv_buffer[:-prefix_len]
+                return
+        self._recv_buffer.clear()
+
     def _read_frame(self) -> Message:
         deadline = self.clock() + self.timeout_s
-        buffer = bytearray()
-        expected_size: int | None = None
+        try:
+            while True:
+                self._trim_noise()
+                if len(self._recv_buffer) >= 12:
+                    payload_length = struct.unpack_from("<H", self._recv_buffer, 10)[0]
+                    if payload_length > MAX_PAYLOAD:
+                        del self._recv_buffer[:1]
+                        continue
+                    expected_size = 12 + payload_length + 4
+                    if len(self._recv_buffer) >= expected_size:
+                        frame_bytes = bytes(self._recv_buffer[:expected_size])
+                        del self._recv_buffer[:expected_size]
+                        return decode_message(frame_bytes)
 
-        while self.clock() < deadline:
-            chunk = self.serial_port.read(max(1, self.serial_port.in_waiting))
-            if not chunk:
-                continue
-            buffer.extend(chunk)
+                if self.clock() >= deadline:
+                    self._recv_buffer.clear()
+                    raise ResponseTimeoutError(
+                        f"no complete bridge response within {self.timeout_s:.1f}s"
+                    )
 
-            magic_index = buffer.find(MAGIC)
-            if magic_index < 0:
-                if len(buffer) > len(MAGIC):
-                    del buffer[: -len(MAGIC) + 1]
-                continue
-            if magic_index > 0:
-                del buffer[:magic_index]
-
-            if expected_size is None and len(buffer) >= 12:
-                payload_length = int.from_bytes(buffer[10:12], "little")
-                expected_size = 12 + payload_length + 4
-            if expected_size is not None and len(buffer) >= expected_size:
-                return decode_message(bytes(buffer[:expected_size]))
-
-        raise ResponseTimeoutError(f"no complete bridge response within {self.timeout_s:.1f}s")
+                in_waiting = getattr(self.serial_port, "in_waiting", 0)
+                to_read = min(max(1, in_waiting), MAX_FRAME_SIZE)
+                chunk = self.serial_port.read(to_read)
+                if chunk:
+                    self._recv_buffer.extend(chunk)
+        except ResponseTimeoutError:
+            self._recv_buffer.clear()
+            raise
+        except TimeoutError as exc:
+            self._recv_buffer.clear()
+            raise ResponseTimeoutError(
+                f"no complete bridge response within {self.timeout_s:.1f}s"
+            ) from exc
 
 
 def candidate_ports() -> list[str]:

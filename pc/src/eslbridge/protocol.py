@@ -10,6 +10,7 @@ from dataclasses import dataclass
 MAGIC = b"ESLI"
 PROTOCOL_VERSION = 1
 MAX_PAYLOAD = 4096
+MAX_FRAME_SIZE = 12 + MAX_PAYLOAD + 4
 _HEADER_WITHOUT_MAGIC = struct.Struct("<BBBBHH")
 _CRC = struct.Struct("<I")
 

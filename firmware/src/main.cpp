@@ -136,11 +136,27 @@ void setup() {
 void loop() {
     ui.update();
 
+    const auto now_ms = millis();
+    const auto poll_res = parser.poll(now_ms);
+    if (poll_res == eslbridge::protocol::StreamParser::Result::kFrameError ||
+        poll_res == eslbridge::protocol::StreamParser::Result::kTimeout) {
+        if (parser.has_error_context()) {
+            send_response(parser.error_command(), parser.error(), parser.error_sequence());
+        }
+        parser.reset();
+    }
+
     while (Serial.available() > 0) {
         const auto byte = static_cast<std::uint8_t>(Serial.read());
         const auto result = parser.push(byte, millis());
         if (result == eslbridge::protocol::StreamParser::Result::kMessageReady) {
             handle_message(parser.message());
+            parser.reset();
+        } else if (result == eslbridge::protocol::StreamParser::Result::kFrameError ||
+                   result == eslbridge::protocol::StreamParser::Result::kTimeout) {
+            if (parser.has_error_context()) {
+                send_response(parser.error_command(), parser.error(), parser.error_sequence());
+            }
             parser.reset();
         }
     }

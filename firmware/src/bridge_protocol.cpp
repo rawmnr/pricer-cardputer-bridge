@@ -51,6 +51,9 @@ void StreamParser::reset() {
     last_byte_ms_ = 0;
     message_ = {};
     error_ = Status::kOk;
+    has_error_context_ = false;
+    error_command_ = Command::kHello;
+    error_sequence_ = 0;
 }
 
 bool StreamParser::magic_matches_prefix() const {
@@ -60,19 +63,39 @@ bool StreamParser::magic_matches_prefix() const {
     return std::equal(buffer_.begin(), buffer_.begin() + static_cast<std::ptrdiff_t>(size_), kMagic.begin());
 }
 
-StreamParser::Result StreamParser::push(const std::uint8_t byte, const std::uint32_t now_ms) {
+StreamParser::Result StreamParser::poll(const std::uint32_t now_ms) {
     if (size_ > 0 && (now_ms - last_byte_ms_) > config::kParserTimeoutMs) {
-        reset();
         error_ = Status::kTimeout;
+        if (size_ >= kHeaderSize) {
+            has_error_context_ = true;
+            error_command_ = static_cast<Command>(buffer_[5]);
+            error_sequence_ = read_u16_le(buffer_.data() + 8);
+        } else {
+            has_error_context_ = false;
+        }
+        size_ = 0;
+        expected_size_ = 0;
+        return Result::kTimeout;
     }
+    return Result::kNeedMoreData;
+}
+
+StreamParser::Result StreamParser::push(const std::uint8_t byte, const std::uint32_t now_ms) {
+    const auto poll_res = poll(now_ms);
+    if (poll_res != Result::kNeedMoreData) {
+        return poll_res;
+    }
+
     last_byte_ms_ = now_ms;
 
     if (size_ < kMagic.size()) {
         buffer_[size_++] = byte;
         if (!magic_matches_prefix()) {
-            // Retain a possible new first magic byte for fast resynchronization.
-            const bool starts_new_magic = byte == kMagic[0];
-            reset();
+            const bool starts_new_magic = (byte == kMagic[0]);
+            size_ = 0;
+            expected_size_ = 0;
+            has_error_context_ = false;
+            error_ = Status::kOk;
             if (starts_new_magic) {
                 buffer_[0] = byte;
                 size_ = 1;
@@ -85,7 +108,15 @@ StreamParser::Result StreamParser::push(const std::uint8_t byte, const std::uint
 
     if (size_ >= buffer_.size()) {
         error_ = Status::kBadLength;
-        reset();
+        if (size_ >= kHeaderSize) {
+            has_error_context_ = true;
+            error_command_ = static_cast<Command>(buffer_[5]);
+            error_sequence_ = read_u16_le(buffer_.data() + 8);
+        } else {
+            has_error_context_ = false;
+        }
+        size_ = 0;
+        expected_size_ = 0;
         return Result::kFrameError;
     }
 
@@ -95,7 +126,11 @@ StreamParser::Result StreamParser::push(const std::uint8_t byte, const std::uint
         const auto payload_length = read_u16_le(buffer_.data() + 10);
         if (payload_length > config::kMaxPayload) {
             error_ = Status::kBadLength;
-            reset();
+            has_error_context_ = true;
+            error_command_ = static_cast<Command>(buffer_[5]);
+            error_sequence_ = read_u16_le(buffer_.data() + 8);
+            size_ = 0;
+            expected_size_ = 0;
             return Result::kFrameError;
         }
         expected_size_ = kHeaderSize + payload_length + kCrcSize;
@@ -103,11 +138,12 @@ StreamParser::Result StreamParser::push(const std::uint8_t byte, const std::uint
 
     if (expected_size_ != 0 && size_ == expected_size_) {
         if (!decode_current_frame()) {
-            const auto result = Result::kFrameError;
             size_ = 0;
             expected_size_ = 0;
-            return result;
+            return Result::kFrameError;
         }
+        size_ = 0;
+        expected_size_ = 0;
         return Result::kMessageReady;
     }
 
@@ -121,10 +157,16 @@ bool StreamParser::decode_current_frame() {
 
     if (buffer_[4] != config::kProtocolVersion) {
         error_ = Status::kBadVersion;
+        has_error_context_ = true;
+        error_command_ = static_cast<Command>(buffer_[5]);
+        error_sequence_ = read_u16_le(buffer_.data() + 8);
         return false;
     }
     if (expected_crc != actual_crc) {
         error_ = Status::kBadCrc;
+        has_error_context_ = true;
+        error_command_ = static_cast<Command>(buffer_[5]);
+        error_sequence_ = read_u16_le(buffer_.data() + 8);
         return false;
     }
 
@@ -135,6 +177,7 @@ bool StreamParser::decode_current_frame() {
     message_.sequence = read_u16_le(buffer_.data() + 8);
     message_.payload = ByteView(buffer_.data() + kHeaderSize, payload_length);
     error_ = Status::kOk;
+    has_error_context_ = false;
     return true;
 }
 

@@ -6,7 +6,14 @@ from dataclasses import dataclass, field
 import pytest
 
 from eslbridge.models import HelloInfo
-from eslbridge.protocol import Command, Message, Status, decode_message, encode_message
+from eslbridge.protocol import (
+    Command,
+    CrcMismatchError,
+    Message,
+    Status,
+    decode_message,
+    encode_message,
+)
 from eslbridge.transport import (
     AccessDeniedError,
     BridgeTransport,
@@ -402,3 +409,155 @@ def test_discover_bridge_non_ok_device_status_closes_transport() -> None:
 
     assert exc_info.value.status == Status.UNSUPPORTED_COMMAND
     assert serial.closed is True
+
+
+def test_transport_fragmentation() -> None:
+    """Verify host transport reassembles fragmented frames across small chunks."""
+    clock = FakeClock()
+    msg = Message(Command.GET_STATUS, sequence=1, payload=b"fragmented payload")
+    frame = encode_message(msg)
+    # Deliver in 1-byte, 2-byte, 5-byte chunks
+    serial = ConfigurableFakeSerial(
+        response_bytes=frame, chunk_sizes=[1, 2, 5, 3, 100], clock=clock
+    )
+    transport = BridgeTransport(serial_port=serial, timeout_s=5.0, clock=clock.time)
+    res = transport._read_frame()
+    assert res == msg
+
+
+def test_transport_concatenation() -> None:
+    """Verify host transport retains concatenated frames without dropping bytes."""
+    clock = FakeClock()
+    msg1 = Message(Command.HELLO, sequence=1, payload=b"first")
+    msg2 = Message(Command.GET_STATUS, sequence=2, payload=b"second")
+    msg3 = Message(Command.CARRIER_TEST, sequence=3, payload=b"third")
+    concatenated = encode_message(msg1) + encode_message(msg2) + encode_message(msg3)
+
+    serial = ConfigurableFakeSerial(response_bytes=concatenated, clock=clock)
+    transport = BridgeTransport(serial_port=serial, timeout_s=5.0, clock=clock.time)
+
+    r1 = transport._read_frame()
+    assert r1 == msg1
+    r2 = transport._read_frame()
+    assert r2 == msg2
+    r3 = transport._read_frame()
+    assert r3 == msg3
+    assert len(transport._recv_buffer) == 0
+
+
+def test_transport_noisy_prefixes() -> None:
+    """Verify host transport trims arbitrary noise and partial magic prefixes."""
+    clock = FakeClock()
+    msg = Message(Command.HELLO, sequence=10)
+    valid_frame = encode_message(msg)
+
+    noise_cases = [
+        b"GARBAGE_NOISE_BYTES" + valid_frame,
+        b"E" + valid_frame,
+        b"ES" + valid_frame,
+        b"ESL" + valid_frame,
+        b"ESLX_NOT_MAGIC" + valid_frame,
+        b"ESLESLI" + valid_frame[4:],  # Partial magic false start followed by real magic
+    ]
+
+    for noise in noise_cases:
+        serial = ConfigurableFakeSerial(response_bytes=noise, clock=clock)
+        transport = BridgeTransport(serial_port=serial, timeout_s=5.0, clock=clock.time)
+        assert transport._read_frame() == msg
+
+
+def test_transport_oversized_header() -> None:
+    """Verify oversized header (payload_length > 4096) is immediately rejected without waiting."""
+    clock = FakeClock()
+    msg_valid = Message(Command.HELLO, sequence=99)
+    valid_frame = encode_message(msg_valid)
+
+    # Oversized header: MAGIC + header with payload length 5000 (0x1388)
+    oversized_header = b"ESLI\x01\x01\x00\x00\x01\x00\x88\x13"
+    stream = oversized_header + valid_frame
+
+    serial = ConfigurableFakeSerial(response_bytes=stream, clock=clock)
+    transport = BridgeTransport(serial_port=serial, timeout_s=5.0, clock=clock.time)
+
+    # Should drop oversized header and return valid frame immediately
+    res = transport._read_frame()
+    assert res == msg_valid
+
+
+def test_transport_timeout_cleanup() -> None:
+    """Verify host transport clears partial state on timeout."""
+    clock = FakeClock()
+    # Partial frame (magic + 4 bytes header) without enough data to complete
+    partial = b"ESLI\x01\x01\x00\x00"
+
+    serial = ConfigurableFakeSerial(response_bytes=partial, read_delay_s=6.0, clock=clock)
+    transport = BridgeTransport(serial_port=serial, timeout_s=5.0, clock=clock.time)
+
+    with pytest.raises(ResponseTimeoutError):
+        transport._read_frame()
+
+    assert len(transport._recv_buffer) == 0
+
+    # Subsequent call with complete frame succeeds
+    valid_msg = Message(Command.HELLO, sequence=5)
+    serial.response_bytes = encode_message(valid_msg)
+    assert transport._read_frame() == valid_msg
+
+
+def test_transport_recovery_after_errors() -> None:
+    """Verify host transport recovers after noise, CRC error, oversized header, and timeout."""
+    clock = FakeClock()
+    serial = ConfigurableFakeSerial(clock=clock)
+    transport = BridgeTransport(serial_port=serial, timeout_s=5.0, clock=clock.time)
+
+    # 1. Noise recovery
+    valid1 = Message(Command.HELLO, sequence=1)
+    serial.response_bytes = b"NOISE" + encode_message(valid1)
+    assert transport._read_frame() == valid1
+
+    # 2. CRC error recovery
+    bad_crc_frame = bytearray(encode_message(Message(Command.HELLO, sequence=2)))
+    bad_crc_frame[-1] ^= 0xFF
+    valid2 = Message(Command.GET_STATUS, sequence=3)
+    serial.response_bytes = bytes(bad_crc_frame) + encode_message(valid2)
+
+    with pytest.raises(CrcMismatchError):
+        transport._read_frame()
+
+    # Next frame in buffer or subsequent call succeeds
+    assert transport._read_frame() == valid2
+
+    # 3. Oversized header recovery
+    oversized = b"ESLI\x01\x01\x00\x00\x01\x00\x00\x20"  # length 8192
+    valid3 = Message(Command.CARRIER_TEST, sequence=4)
+    serial.response_bytes = oversized + encode_message(valid3)
+    assert transport._read_frame() == valid3
+
+    # 4. Timeout recovery
+    serial.response_bytes = b"ESLI\x01"
+    serial.read_delay_s = 6.0
+    with pytest.raises(ResponseTimeoutError):
+        transport._read_frame()
+
+    assert len(transport._recv_buffer) == 0
+    serial.read_delay_s = 0.0
+    valid4 = Message(Command.SEND_PRICER_FRAME, sequence=5, payload=b"ok")
+    serial.response_bytes = encode_message(valid4)
+    assert transport._read_frame() == valid4
+
+
+def test_transport_read_size_capped() -> None:
+    """Verify serial reads are capped at MAX_FRAME_SIZE (4112)."""
+
+    class SizeCheckingSerial(ConfigurableFakeSerial):
+        def read(self, size: int = 1) -> bytes:
+            assert size <= 4112, f"read size {size} exceeds max frame size 4112"
+            return super().read(size)
+
+    clock = FakeClock()
+    msg = Message(Command.HELLO, sequence=1)
+    serial = SizeCheckingSerial(response_bytes=encode_message(msg), clock=clock)
+    # Set in_waiting to 10000 bytes
+    serial.response_bytes = encode_message(msg) + b"X" * 10000
+    transport = BridgeTransport(serial_port=serial, timeout_s=5.0, clock=clock.time)
+    assert transport._read_frame() == msg
