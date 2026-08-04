@@ -18,6 +18,10 @@ class ProtocolError(ValueError):
     """Raised when a bridge frame is malformed or unsupported."""
 
 
+class CrcMismatchError(ProtocolError):
+    """Raised when frame CRC verification fails."""
+
+
 class Command(enum.IntEnum):
     HELLO = 0x01
     GET_STATUS = 0x02
@@ -102,7 +106,7 @@ def decode_message(frame: bytes) -> Message:
     expected_crc = _CRC.unpack_from(frame, payload_end)[0]
     actual_crc = zlib.crc32(frame[4:payload_end]) & 0xFFFFFFFF
     if expected_crc != actual_crc:
-        raise ProtocolError(
+        raise CrcMismatchError(
             f"CRC mismatch: expected 0x{expected_crc:08X}, calculated 0x{actual_crc:08X}"
         )
 

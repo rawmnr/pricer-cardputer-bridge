@@ -79,15 +79,17 @@ Do not expose the Launcher WebUI to an untrusted network. Change default Launche
 
 Launcher and the bridge application are distinct USB runtimes. Starting the application may cause Windows to remove one COM device and enumerate another. The host tooling must not assume that the Launcher COM number remains valid.
 
-Initial manual workflow:
+Automatic discovery workflow:
 
 ```powershell
-# Run after the bridge application has booted
-pio device list
+# Run after the bridge application has booted (auto-discovers sole Cardputer bridge)
+uv run --project .\pc eslbridge probe
+
+# Or pass explicit port if multiple serial devices exist
 uv run --project .\pc eslbridge probe --port COM7
 ```
 
-Future host behavior should support bounded discovery/retry after application boot and report ambiguous devices clearly.
+Host tooling supports bounded auto-discovery and retry after application boot via `discover_bridge` and `eslbridge probe`. When `--port` is omitted, discovery polls candidate serial ports, validates HELLO protocol identity, and retries up to `--timeout` seconds (default 3.0s) for single candidate or transient timeout cases. If zero ports are found within the timeout window, discovery fails with `MissingPortError`. If multiple candidate serial ports are detected, discovery immediately rejects the ambiguity with `MultiplePortsError`, reporting candidate port names and advising the user to pass `--port <PORT>`. Direct `--port` targeting remains supported and validates HELLO identity on the specified port.
 
 ## Returning to Launcher
 

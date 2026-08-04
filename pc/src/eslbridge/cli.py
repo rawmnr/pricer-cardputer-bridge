@@ -8,9 +8,9 @@ import typer
 from rich.console import Console
 from rich.table import Table
 
-from .models import CarrierTestRequest, HelloInfo
+from .models import CarrierTestRequest
 from .protocol import Command
-from .transport import BridgeTransport, candidate_ports
+from .transport import BridgeError, BridgeTransport, candidate_ports, discover_bridge
 
 app = typer.Typer(no_args_is_help=True, help="Control a Cardputer-Adv Pricer ESL bridge.")
 console = Console()
@@ -33,17 +33,25 @@ def ports() -> None:
 
 
 @app.command()
-def probe(port: PortOption, timeout: TimeoutOption = 3.0) -> None:
+def probe(
+    port: Annotated[
+        str | None, typer.Option("--port", help="Windows COM port, for example COM7")
+    ] = None,
+    timeout: TimeoutOption = 3.0,
+) -> None:
     """Perform a HELLO round trip and print bridge capabilities."""
     try:
-        with BridgeTransport.open(port, timeout_s=timeout) as bridge:
-            response = bridge.request(Command.HELLO)
-        info = HelloInfo.decode(response.payload)
+        with discover_bridge(port=port, timeout_s=timeout) as discovered:
+            info = discovered.hello
+            actual_port = discovered.port
+    except BridgeError as exc:
+        console.print(f"[red]Probe failed:[/red] {exc}")
+        raise typer.Exit(code=2) from exc
     except Exception as exc:
         console.print(f"[red]Probe failed:[/red] {exc}")
         raise typer.Exit(code=2) from exc
 
-    table = Table(title=f"Cardputer bridge on {port}")
+    table = Table(title=f"Cardputer bridge on {actual_port}")
     table.add_column("Field")
     table.add_column("Value")
     table.add_row("Protocol", str(info.protocol_version))

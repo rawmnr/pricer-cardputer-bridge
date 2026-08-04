@@ -19,15 +19,38 @@ class HelloInfo:
     capabilities: int
     max_payload: int
     ir_gpio: int
+    reserved: int = 0
 
     @classmethod
     def decode(cls, payload: bytes) -> HelloInfo:
         if len(payload) != _HELLO.size:
             raise ProtocolError(f"HELLO payload must be {_HELLO.size} bytes")
-        protocol, major, minor, patch, capabilities, max_payload, ir_gpio, _ = _HELLO.unpack(
+        protocol, major, minor, patch, capabilities, max_payload, ir_gpio, reserved = _HELLO.unpack(
             payload
         )
-        return cls(protocol, (major, minor, patch), capabilities, max_payload, ir_gpio)
+        return cls(protocol, (major, minor, patch), capabilities, max_payload, ir_gpio, reserved)
+
+    def is_valid_identity(self) -> tuple[bool, str]:
+        if self.protocol_version != 1:
+            return False, f"unsupported protocol version {self.protocol_version} (expected 1)"
+        if self.max_payload != 4096:
+            return False, f"unexpected max payload {self.max_payload} (expected 4096)"
+        if self.ir_gpio != 44:
+            return False, f"unexpected IR GPIO {self.ir_gpio} (expected 44)"
+        if self.reserved != 0:
+            return False, f"non-zero reserved byte {self.reserved}"
+        required_capabilities = 0x09
+        if (self.capabilities & required_capabilities) != required_capabilities:
+            return False, f"missing required capabilities 0x09 (got 0x{self.capabilities:08X})"
+        return True, ""
+
+    def validate_identity(self, port: str = "") -> None:
+        valid, reason = self.is_valid_identity()
+        if not valid:
+            from .transport import InvalidDeviceError
+
+            prefix = f"Device on {port} " if port else "Device "
+            raise InvalidDeviceError(f"{prefix}{reason}")
 
 
 @dataclass(frozen=True, slots=True)
