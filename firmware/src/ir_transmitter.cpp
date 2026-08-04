@@ -41,10 +41,10 @@ protocol::Status IrTransmitter::begin() {
     rmt_config_t config = RMT_DEFAULT_CONFIG_TX(
         static_cast<gpio_num_t>(config::kIrGpio), kRmtChannel);
     config.clk_div = kClockDivider;
-    // One PP16 frame can contain 256 bytes = 512 nibble items.
-    // Reserve all eight RMT memory blocks so the bounded frame fits without
-    // heap-backed driver buffering or chunk-induced timing gaps.
-    config.mem_block_num = 8;
+    // The legacy RMT driver streams arbitrarily long item arrays through its
+    // ISR; one block avoids reserving all channel memory during boot.
+    config.mem_block_num = 1;
+    config.tx_config.loop_en = false;
     config.tx_config.carrier_en = true;
     config.tx_config.carrier_freq_hz = config::kDefaultCarrierHz;
     config.tx_config.carrier_duty_percent = config::kDefaultDutyPercent;

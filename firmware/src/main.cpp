@@ -56,6 +56,7 @@ void handle_message(const eslbridge::protocol::MessageView& message) {
             payload[2] = 1;
             payload[3] = 0;
             const std::uint32_t capabilities = (1U << 0U) | (1U << 2U) | (1U << 3U);
+            eslbridge::protocol::write_u32_le(payload.data() + 4, capabilities);
             eslbridge::protocol::write_u16_le(
                 payload.data() + 8,
                 static_cast<std::uint16_t>(eslbridge::config::kMaxPayload));
