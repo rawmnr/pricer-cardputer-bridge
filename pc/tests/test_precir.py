@@ -1,8 +1,13 @@
 from __future__ import annotations
 
 import struct
+import sys
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).parents[2]))
 
 import pytest
+from scripts.generate_vectors import make_image_data_bodies, make_vectors
 
 from eslbridge.models import (
     MAX_INTER_REPEAT_GAP_US,
@@ -11,6 +16,8 @@ from eslbridge.models import (
     MODULATION_PP16,
 )
 from eslbridge.precir import (
+    BITS_PER_FRAME,
+    BYTES_PER_FRAME,
     CRC16_INITIAL,
     CRC16_POLYNOMIAL,
     PRECIR_ADAPTER_PROVENANCE,
@@ -26,6 +33,7 @@ from eslbridge.precir import (
     finalize_precir_frame,
     make_mcu_frame,
     make_raw_frame,
+    pad_image_payload,
 )
 
 
@@ -155,12 +163,15 @@ def test_request_builder_bounds_validation() -> None:
 TARGET_BARCODE = "N4163114582613272"
 TARGET_PLID = PricerPlid(internal=b"\x3f\xb7\xb3\x02", wire=b"\x02\xb3\xb7\x3f")
 
+RAW_IMAGE_PAYLOAD = bytes.fromhex("f00ff00ff00ff00ff00ff00ff00ff00f")
 CORRECTED_VECTORS = {
     "wake.bin": "000000408502b3b73f170100000001010101010101010101010101010101010101010101f1c3",
     "params-8x8-color.bin": (
-        "000000408502b3b73f340000000500100000010008000800000000000088000000000000c847"
+        "000000408502b3b73f340000000500140000010008000800000000000088000000000000789a"
     ),
-    "data-8x8-color.bin": "000000408502b3b73f34000000200000f00ff00ff00ff00ff00ff00ff00ff00f9c4d",
+    "data-8x8-color.bin": (
+        "000000408502b3b73f34000000200000f00ff00ff00ff00ff00ff00ff00ff00f00000000f280"
+    ),
     "refresh.bin": "000000408502b3b73f3400000001000000000000000000000000000000000000000000008c01",
 }
 
@@ -180,6 +191,42 @@ def test_precir_plid_and_frame_builder_validation() -> None:
         make_mcu_frame(TARGET_PLID, 0x05, "invalid")  # type: ignore[arg-type]
 
 
+def test_precir_image_group_is_padded_to_complete_data_frame() -> None:
+    assert BYTES_PER_FRAME == 20
+    assert BITS_PER_FRAME == 160
+    assert len(RAW_IMAGE_PAYLOAD) == 16
+
+    padded = pad_image_payload(RAW_IMAGE_PAYLOAD)
+
+    assert len(padded) == BYTES_PER_FRAME
+    assert padded == RAW_IMAGE_PAYLOAD + b"\x00" * 4
+
+
+def test_precir_padding_matches_upstream_for_aligned_payload() -> None:
+    assert pad_image_payload(b"\xaa" * BYTES_PER_FRAME) == (
+        b"\xaa" * BYTES_PER_FRAME + b"\x00" * BYTES_PER_FRAME
+    )
+
+
+def test_precir_padding_rejects_non_bytes_payload() -> None:
+    with pytest.raises(PrecIRAdapterError, match="payload must be bytes, got bytearray"):
+        pad_image_payload(bytearray(BYTES_PER_FRAME))  # type: ignore[arg-type]
+
+
+def test_generated_image_vectors_use_padded_group_length_and_packet_size() -> None:
+    _, bodies, frames = make_vectors()
+    params_body = bodies["params-8x8-color.bin"]
+    data_body = bodies["data-8x8-color.bin"]
+    packets = make_image_data_bodies(RAW_IMAGE_PAYLOAD)
+
+    assert len(packets) == 1
+    assert packets == [data_body]
+    assert int.from_bytes(params_body[:2], "big") == sum(len(packet[2:]) for packet in packets)
+    assert all(len(packet[2:]) == BYTES_PER_FRAME for packet in packets)
+
+    assert {name: frame.hex() for name, frame in frames.items()} == CORRECTED_VECTORS
+
+
 def test_precir_raw_and_mcu_builders_match_independent_golden_frames() -> None:
     assert (
         make_raw_frame(TARGET_PLID, 0x17, bytes.fromhex("01000000" + "01" * 22)).hex()
@@ -189,7 +236,7 @@ def test_precir_raw_and_mcu_builders_match_independent_golden_frames() -> None:
         make_mcu_frame(
             TARGET_PLID,
             0x05,
-            bytes.fromhex("00100000010008000800000000000088000000000000"),
+            bytes.fromhex("00140000010008000800000000000088000000000000"),
         ).hex()
         == CORRECTED_VECTORS["params-8x8-color.bin"]
     )
@@ -197,7 +244,7 @@ def test_precir_raw_and_mcu_builders_match_independent_golden_frames() -> None:
         make_mcu_frame(
             TARGET_PLID,
             0x20,
-            bytes.fromhex("0000f00ff00ff00ff00ff00ff00ff00ff00f"),
+            bytes.fromhex("0000f00ff00ff00ff00ff00ff00ff00ff00f00000000"),
         ).hex()
         == CORRECTED_VECTORS["data-8x8-color.bin"]
     )
@@ -232,7 +279,7 @@ def test_corrected_vectors_match_manifest_binaries_crc_and_frame_shape() -> None
 def test_corrected_parameter_vector_has_raw_page_one_fields() -> None:
     frame = bytes.fromhex(CORRECTED_VECTORS["params-8x8-color.bin"])
     command_payload = frame[14:-2]
-    assert command_payload[:2] == b"\x00\x10"
+    assert command_payload[:2] == b"\x00\x14"
     assert command_payload[2] == 0
     assert command_payload[3] == 0
     assert command_payload[4] == 1

@@ -8,7 +8,7 @@
     "raw_frame_plid_order": "02b3b73f",
     "modulation": 16
   },
-  "profile_revision": "T008B-r1",
+  "profile_revision": "T008C-r1",
   "transmission": {
     "wake_repeats": 400,
     "wake_repeat_gap_us": 2000,
@@ -28,17 +28,17 @@
       "name": "params-8x8-color.bin",
       "command": "0x05",
       "frame_length": 38,
-      "payload_hex": "00100000010008000800000000000088000000000000",
-      "finalized_hex": "000000408502b3b73f340000000500100000010008000800000000000088000000000000c847",
-      "crc16_le_hex": "c847"
+      "payload_hex": "00140000010008000800000000000088000000000000",
+      "finalized_hex": "000000408502b3b73f340000000500140000010008000800000000000088000000000000789a",
+      "crc16_le_hex": "789a"
     },
     {
       "name": "data-8x8-color.bin",
       "command": "0x20",
-      "frame_length": 34,
-      "payload_hex": "0000f00ff00ff00ff00ff00ff00ff00ff00f",
-      "finalized_hex": "000000408502b3b73f34000000200000f00ff00ff00ff00ff00ff00ff00ff00f9c4d",
-      "crc16_le_hex": "9c4d"
+      "frame_length": 38,
+      "payload_hex": "0000f00ff00ff00ff00ff00ff00ff00ff00f00000000",
+      "finalized_hex": "000000408502b3b73f34000000200000f00ff00ff00ff00ff00ff00ff00ff00f00000000f280",
+      "crc16_le_hex": "f280"
     },
     {
       "name": "refresh.bin",

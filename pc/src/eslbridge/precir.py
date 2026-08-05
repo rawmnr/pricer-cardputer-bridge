@@ -9,13 +9,15 @@ compatibility is made.
 Provenance & Citation:
 - Upstream repo: https://github.com/furrtek/PrecIR
 - Upstream commit: b09951e2b3d2741e4ca08f929eafef849f6fc006
-- Inspected upstream file: tools_python/pr.py (terminate_frame / crc16)
+- Inspected upstream files:
+  - tools_python/pr.py (terminate_frame / crc16)
+  - tools_python/img2dm.py (20-byte image packetization and zero padding)
 - Reference doc: https://www.furrtek.org/index.php?a=esl
 - License: GNU General Public License v3.0
 - Clean-room status: No PrecIR source code was copied or vendored. Frame layout,
-  PP16 header bytes (0x00, 0x00, 0x00, 0x40), and CRC16 calculation (poly 0x8408,
-  init 0x8408) are clean-room reimplementations derived from published Python driver
-  tools_python/pr.py and reverse-engineering documentation.
+  PP16 header bytes (0x00, 0x00, 0x00, 0x40), CRC16 calculation (poly 0x8408,
+  init 0x8408), and image packet sizing are clean-room reimplementations derived
+  from the published Python tools and reverse-engineering documentation.
 """
 
 from __future__ import annotations
@@ -52,6 +54,18 @@ PRECIR_ADAPTER_PROVENANCE: Final[str] = (
 # CRC16 polynomial and initial value used in PrecIR tools_python/pr.py
 CRC16_POLYNOMIAL: Final[int] = 0x8408
 CRC16_INITIAL: Final[int] = 0x8408
+
+# Image data packetization in pinned PrecIR tools_python/img2dm.py.
+BYTES_PER_FRAME: Final[int] = 20
+BITS_PER_FRAME: Final[int] = BYTES_PER_FRAME * 8
+
+
+def pad_image_payload(payload: bytes) -> bytes:
+    """Zero-pad encoded image data to complete PrecIR data packets."""
+    if not isinstance(payload, bytes):
+        raise PrecIRAdapterError(f"payload must be bytes, got {type(payload).__name__}")
+    padding_length = BYTES_PER_FRAME - (len(payload) % BYTES_PER_FRAME)
+    return payload + bytes(padding_length)
 
 
 class PrecIRAdapterError(ValueError):

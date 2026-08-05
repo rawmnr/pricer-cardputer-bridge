@@ -53,10 +53,10 @@ env.Append(
     CPPDEFINES=[
         ("BUILD_GIT_SHA", env.StringifyMacro(short_sha)),
         ("BUILD_PROVENANCE_CODE", provenance_code),
-        ("BUILD_PP16_PROFILE_REVISION", env.StringifyMacro("T008B-r1")),
+        ("BUILD_PP16_PROFILE_REVISION", env.StringifyMacro("T008C-r1")),
     ]
 )
 print(
     "Build identity: "
-    f"git={short_sha} provenance={provenance_code} profile=T008B-r1"
+    f"git={short_sha} provenance={provenance_code} profile=T008C-r1"
 )

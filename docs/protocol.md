@@ -49,7 +49,7 @@ Extended HELLO payloads may append a 17-byte build identity suffix (total 29 byt
 | 12 | 1 | identity_version | `0x01` for the build identity layout |
 | 13 | 7 | git_sha | ASCII Git short SHA, or `unknown` when unavailable |
 | 20 | 1 | build_provenance | `0` unknown, `1` clean local, `2` dirty local, `3` CI |
-| 21 | 8 | pp16_profile_revision | ASCII waveform/vector profile identifier, currently `T008B-r1` |
+| 21 | 8 | pp16_profile_revision | ASCII waveform/vector profile identifier, currently `T008C-r1` |
 
 Hosts must continue accepting the original 12-byte HELLO payload. New hosts parse
 the suffix when present and display the exact firmware identity.
@@ -213,10 +213,14 @@ protocol byte. `make_raw_frame()` builds a raw command as:
 ```
 
 The wake command `0x17` uses the raw form. Parameter `0x05`, data `0x20`,
-and refresh `0x01` use the MCU form. The retained 8 × 8 parameter body
-encodes length `0x0010`, unused `0`, raw compression `0`, page `1`, width
-`8`, and height `8`. The application identity profile for these corrected
-vectors is `T008B-r1`.
+and refresh `0x01` use the MCU form. Pinned PrecIR
+`tools_python/img2dm.py` packetizes image data in 20-byte (160-bit) units,
+zero-padding the encoded image group before calculating its length. The
+retained 8 × 8 two-plane raw input is therefore padded from 16 to 20 bytes.
+Its parameter body encodes length `0x0014`, unused `0`, raw compression `0`,
+page `1`, width `8`, and height `8`; its single data packet carries a
+two-byte index followed by exactly 20 image bytes. The application identity
+profile for these vectors is `T008C-r1`.
 
 ### Physical Validation Limitations
 

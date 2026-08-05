@@ -10,16 +10,27 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "pc" / "src"))
 
 from eslbridge.precir import (
+    BYTES_PER_FRAME,
     PricerPlid,
     derive_pricer_plid,
     make_mcu_frame,
     make_raw_frame,
+    pad_image_payload,
 )
 
 BARCODE = "N4163114582613272"
-PROFILE_REVISION = "T008B-r1"
+PROFILE_REVISION = "T008C-r1"
 VECTOR_DIR = ROOT / "tests" / "vectors"
 ORIENTATION_SOURCE = ROOT / "firmware" / "src" / "orientation_test.cpp"
+RAW_IMAGE_PAYLOAD = bytes.fromhex("f00ff00ff00ff00ff00ff00ff00ff00f")
+
+
+def make_image_data_bodies(payload: bytes) -> list[bytes]:
+    padded_payload = pad_image_payload(payload)
+    return [
+        packet_index.to_bytes(2, "big") + padded_payload[offset : offset + BYTES_PER_FRAME]
+        for packet_index, offset in enumerate(range(0, len(padded_payload), BYTES_PER_FRAME))
+    ]
 
 
 def cpp_bytes(frame: bytes) -> str:
@@ -34,12 +45,15 @@ def make_vectors() -> tuple[PricerPlid, dict[str, bytes], dict[str, bytes]]:
     plid = derive_pricer_plid(BARCODE)
     assert plid == PricerPlid(internal=b"\x3f\xb7\xb3\x02", wire=b"\x02\xb3\xb7\x3f")
 
+    padded_image = pad_image_payload(RAW_IMAGE_PAYLOAD)
+    image_data_bodies = make_image_data_bodies(RAW_IMAGE_PAYLOAD)
+    assert len(image_data_bodies) == 1
+
     bodies = {
         "wake.bin": bytes.fromhex("01000000" + "01" * 22),
-        "params-8x8-color.bin": bytes.fromhex(
-            "00100000010008000800000000000088000000000000"
-        ),
-        "data-8x8-color.bin": bytes.fromhex("0000f00ff00ff00ff00ff00ff00ff00ff00f"),
+        "params-8x8-color.bin": len(padded_image).to_bytes(2, "big")
+        + bytes.fromhex("0000010008000800000000000088000000000000"),
+        "data-8x8-color.bin": image_data_bodies[0],
         "refresh.bin": b"\x00" * 22,
     }
     commands = {

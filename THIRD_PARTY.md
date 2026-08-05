@@ -35,6 +35,15 @@ Before adapting PrecIR code:
 - License: GNU General Public License v3.0 (GPL-3.0-only)
 - Adaptation: clean-room Python adapter implementation (`pc/src/eslbridge/precir.py`) exposing deterministic CRC16 calculation (polynomial 0x8408, init 0x8408 over raw payload), PP16 header placement (`0x00, 0x00, 0x00, 0x40` prefix), little-endian CRC16 trailer placement, frame finalization (`finalize_precir_frame`), and repeat metadata separation helper (`build_pricer_frame_request`). No PrecIR source code was copied or vendored.
 - Change note: added 2026-08-04; framing and CRC implementation remain provisional and UNTESTED against physical Pricer ESL target tags in this setup. No claim of tag or physical carrier compatibility is made.
+
+### T008C image packetization provenance
+
+- Pinned source commit: `b09951e2b3d2741e4ca08f929eafef849f6fc006`
+- Source file inspected: `tools_python/img2dm.py` (`bytes_per_frame`, `bits_per_frame`, padding, parameter length, and data-frame loop)
+- License: GNU General Public License v3.0 (GPL-3.0-only)
+- Adaptation: clean-room Python implementation models 20-byte/160-bit image packets, PrecIR's zero-padding rule, padded group length, and indexed packet construction in `pc/src/eslbridge/precir.py` and `scripts/generate_vectors.py`. No PrecIR source code was copied or vendored.
+- Change note: added 2026-08-05 for `T008C-r1`; generated vectors remain UNTESTED against the physical target ESL. No claim of tag compatibility, carrier accuracy, or optical power is made.
+
 ## M5Cardputer library
 
 - Project: `m5stack/M5Cardputer`
