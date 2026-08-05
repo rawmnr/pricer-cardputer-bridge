@@ -82,8 +82,6 @@ class PP16TimingProfile:
         nibble_gaps_us: Tuple of 16 post-burst gap durations (us) for nibbles 0..15.
         preamble_burst_us: Optional preamble pulse duration in microseconds (0 to disable).
         preamble_gap_us: Optional preamble space duration in microseconds.
-        trailer_burst_us: Optional trailer pulse duration in microseconds (0 to disable).
-        trailer_gap_us: Optional trailer space duration in microseconds.
         provenance: Reference source for profile timing parameters.
         is_provisional: Flag indicating profile is inferred/untested on target board.
     """
@@ -94,8 +92,6 @@ class PP16TimingProfile:
     nibble_gaps_us: tuple[int, ...] = PRECIR_NIBBLE_GAPS_US
     preamble_burst_us: int = 0
     preamble_gap_us: int = 0
-    trailer_burst_us: int = 0
-    trailer_gap_us: int = 0
     provenance: str = PRECIR_PROVENANCE
     is_provisional: bool = True
 
@@ -125,10 +121,6 @@ class PP16TimingProfile:
         if self.preamble_burst_us > 5000 or self.preamble_gap_us > 10000:
             raise PP16EncoderError(
                 f"invalid preamble durations ({self.preamble_burst_us}, {self.preamble_gap_us})"
-            )
-        if self.trailer_burst_us > 5000 or self.trailer_gap_us > 10000:
-            raise PP16EncoderError(
-                f"invalid trailer durations ({self.trailer_burst_us}, {self.trailer_gap_us})"
             )
 
     def symbol_gap_us(self, nibble: int) -> int:
@@ -189,10 +181,6 @@ def encode_pp16_symbols(
 
     # A terminal carrier burst marks the end of the final nibble.
     symbols.append(SymbolTiming(profile.symbol_burst_us, 0))
-
-    if profile.trailer_burst_us > 0:
-        symbols.append(SymbolTiming(profile.trailer_burst_us, profile.trailer_gap_us))
-
     return symbols
 
 

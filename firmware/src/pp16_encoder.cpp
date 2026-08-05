@@ -48,12 +48,6 @@ Status encode_frame(
     out_frame.symbols[out_frame.symbol_count++] = terminal;
     out_frame.total_duration_us += terminal.total_us();
 
-    // Optional trailer after the required terminal burst.
-    if (profile.trailer_burst_us > 0) {
-        const Pp16Symbol trailer{profile.trailer_burst_us, profile.trailer_gap_us};
-        out_frame.symbols[out_frame.symbol_count++] = trailer;
-        out_frame.total_duration_us += trailer.total_us();
-    }
 
     return Status::kOk;
 }

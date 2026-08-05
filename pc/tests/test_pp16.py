@@ -95,7 +95,7 @@ def test_golden_cumulative_burst_starts(payload: bytes, expected_starts: list[in
     assert symbols[-1] == SymbolTiming(21, 0)
 
 
-def test_encode_multiple_bytes_and_optional_pulses() -> None:
+def test_encode_multiple_bytes_and_optional_preamble() -> None:
     profile = precir_pp16_profile()
     symbols = encode_pp16_symbols(b"\xa5\x0f", profile)
     assert len(symbols) == 5
@@ -110,8 +110,6 @@ def test_encode_multiple_bytes_and_optional_pulses() -> None:
     profile_pt = PP16TimingProfile(
         preamble_burst_us=500,
         preamble_gap_us=500,
-        trailer_burst_us=200,
-        trailer_gap_us=500,
     )
     symbols_pt = encode_pp16_symbols(b"\x12", profile_pt)
     assert symbols_pt == [
@@ -119,7 +117,6 @@ def test_encode_multiple_bytes_and_optional_pulses() -> None:
         profile_pt.symbol_timing(2),
         profile_pt.symbol_timing(1),
         SymbolTiming(21, 0),
-        SymbolTiming(200, 500),
     ]
 
 
@@ -141,7 +138,12 @@ def test_invalid_payload_input_rejected() -> None:
 def test_long_frame_capacity_boundary() -> None:
     profile = precir_pp16_profile()
     max_payload = b"\xaa" * MAX_FRAME_BYTES
-    assert len(encode_pp16_symbols(max_payload, profile)) == MAX_FRAME_BYTES * 2 + 1
+    symbols = encode_pp16_symbols(max_payload, profile)
+    assert len(symbols) == MAX_FRAME_BYTES * 2 + 1
+    assert symbols[-1] == SymbolTiming(21, 0)
+    assert calculate_frame_duration_us(max_payload, profile) == (
+        MAX_FRAME_BYTES * 2 * (21 + PRECIR_NIBBLE_GAPS_US[10]) + 21
+    )
 
     oversized_payload = b"\xaa" * (MAX_FRAME_BYTES + 1)
     with pytest.raises(PP16EncoderError, match="exceeds maximum allowed capacity"):

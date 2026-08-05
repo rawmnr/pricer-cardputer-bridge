@@ -8,10 +8,6 @@
 #include "device_ui.hpp"
 #include "ir_transmitter.hpp"
 
-#ifndef PROJECT_VERSION
-#define PROJECT_VERSION "0.0.0"
-#endif
-
 namespace {
 
 using eslbridge::protocol::Command;
@@ -65,9 +61,9 @@ void handle_message(const eslbridge::protocol::MessageView& message) {
             }
             std::array<std::uint8_t, 29> payload{};
             payload[0] = eslbridge::config::kProtocolVersion;
-            payload[1] = 0;
-            payload[2] = 1;
-            payload[3] = 0;
+            payload[1] = eslbridge::config::kFirmwareVersionMajor;
+            payload[2] = eslbridge::config::kFirmwareVersionMinor;
+            payload[3] = eslbridge::config::kFirmwareVersionPatch;
             const std::uint32_t capabilities = (1U << 0U) | (1U << 2U) | (1U << 3U);
             eslbridge::protocol::write_u32_le(payload.data() + 4, capabilities);
             eslbridge::protocol::write_u16_le(
@@ -171,7 +167,7 @@ void setup() {
     ui.begin();
     ui.show_ready(
         eslbridge::config::kIrGpio,
-        PROJECT_VERSION,
+        eslbridge::config::kFirmwareVersion,
         eslbridge::config::kBuildGitSha,
         build_provenance_name(),
         eslbridge::config::kPp16ProfileRevision);

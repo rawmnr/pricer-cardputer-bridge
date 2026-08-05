@@ -67,6 +67,8 @@ class HelloInfo:
             provenance_code,
             raw_profile,
         ) = _HELLO_IDENTITY.unpack(payload)
+        if identity_version != 1:
+            raise ProtocolError(f"unsupported HELLO build identity version {identity_version}")
         try:
             git_sha = raw_git_sha.decode("ascii").rstrip("\x00")
             profile_revision = raw_profile.decode("ascii").rstrip("\x00")

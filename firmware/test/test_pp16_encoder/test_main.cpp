@@ -69,9 +69,9 @@ void test_encode_single_byte(void) {
     TEST_ASSERT_EQUAL_UINT32(21, frame.symbols[2].burst_us);
     TEST_ASSERT_EQUAL_UINT32(0, frame.symbols[2].gap_us);
 
-    TEST_ASSERT_EQUAL_UINT32(56, frame.symbols[1].total_us());
+    TEST_ASSERT_EQUAL_UINT32(72, frame.symbols[1].total_us());
     TEST_ASSERT_EQUAL_UINT32(21, frame.symbols[2].total_us());
-    TEST_ASSERT_EQUAL_UINT32(48 + 56 + 21, frame.total_duration_us);
+    TEST_ASSERT_EQUAL_UINT32(56 + 72 + 21, frame.total_duration_us);
 }
 
 
@@ -124,6 +124,9 @@ void test_encode_capacity_boundary(void) {
     Status status = encode_frame(max_payload, kMaxFrameBytes, profile, frame);
     TEST_ASSERT_EQUAL(static_cast<int>(Status::kOk), static_cast<int>(status));
     TEST_ASSERT_EQUAL_UINT32(513, frame.symbol_count);
+    TEST_ASSERT_EQUAL_UINT32(21, frame.symbols[512].burst_us);
+    TEST_ASSERT_EQUAL_UINT32(0, frame.symbols[512].gap_us);
+    TEST_ASSERT_EQUAL_UINT32((256U * 2U * (21U + 75U)) + 21U, frame.total_duration_us);
 
     status = encode_frame(max_payload, kMaxFrameBytes + 1, profile, frame);
     TEST_ASSERT_EQUAL(static_cast<int>(Status::kPayloadTooLarge), static_cast<int>(status));

@@ -7,7 +7,7 @@
 namespace eslbridge::pp16 {
 
 constexpr std::size_t kMaxFrameBytes = 256;
-constexpr std::size_t kMaxSymbolsPerFrame = (kMaxFrameBytes * 2) + 3;
+constexpr std::size_t kMaxSymbolsPerFrame = (kMaxFrameBytes * 2) + 2;
 
 constexpr std::uint32_t kMinCarrierHz = 500000;
 constexpr std::uint32_t kMaxCarrierHz = 2000000;
@@ -62,8 +62,6 @@ struct TimingProfile {
     std::array<std::uint32_t, 16> nibble_gaps_us{kPrecirNibbleGapsUs};
     std::uint32_t preamble_burst_us{0};
     std::uint32_t preamble_gap_us{0};
-    std::uint32_t trailer_burst_us{0};
-    std::uint32_t trailer_gap_us{0};
     bool is_provisional{true};
 
     constexpr bool validate() const {
@@ -82,9 +80,6 @@ struct TimingProfile {
             }
         }
         if (preamble_burst_us > 5000 || preamble_gap_us > 10000) {
-            return false;
-        }
-        if (trailer_burst_us > 5000 || trailer_gap_us > 10000) {
             return false;
         }
         return true;

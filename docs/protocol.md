@@ -165,8 +165,8 @@ table in microseconds:
    gap. The table values are gaps, not total symbol durations.
 3. One terminal 21 us carrier burst follows the final nibble. The default frame
    therefore emits `2N + 1` bursts for `N` payload bytes.
-4. Optional preamble and trailer symbols may be configured for future profiles;
-   the terminal burst remains mandatory.
+4. An optional preamble may be configured for future profiles; the terminal burst
+   remains mandatory and is always the final RMT item.
 
 ### PrecIR Interoperability Adapter & Frame Finalization
 
