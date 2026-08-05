@@ -294,10 +294,10 @@ def test_embedded_orientation_vectors_match_retained_binaries() -> None:
     root = Path(__file__).parents[2]
     source = (root / "firmware" / "src" / "orientation_test.cpp").read_text()
     symbols = {
-        "wake.bin": "Wake",
-        "params-8x8-color.bin": "Params",
-        "data-8x8-color.bin": "Data",
-        "refresh.bin": "Refresh",
+        "wake.bin": "PrecirWake",
+        "params-8x8-color.bin": "PrecirParams",
+        "data-8x8-color.bin": "PrecirData",
+        "refresh.bin": "PrecirRefresh",
     }
     for name, symbol in symbols.items():
         match = re.search(

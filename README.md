@@ -62,17 +62,19 @@ number keys:
 
 | Key | Action |
 |---|---|
-| `1` | Send retained wake + 8 × 8 params + data + refresh sequence; label result `TEST-1` |
-| `2` | Same bounded sequence; label result `TEST-2` |
-| `3` | Same bounded sequence; label result `TEST-3` |
-| `4` | Same bounded sequence; label result `TEST-4` |
+| `1` | `PRECIR_CONTROL`: retained T008C wake `0x17`, page 1, partial 8 × 8 image |
+| `2` | `PRICEHAX_EXACT`: type-1327 wake `0x97`, page 2, full-screen 208 × 112 image |
+| `3` | `PRICEHAX_WAKE17`: key 2 with the retained PrecIR wake command/body |
+| `4` | `PRICEHAX_PAGE1`: key 2 with page 1 |
 
-Use one key per physical placement/orientation. Each sequence sends one
-400-repeat wake operation with a 2 ms inter-repeat gap, followed by the three
-single-frame vectors committed under `tests/vectors/`. Key tests are finite and
-do not enable continuous carrier output. Local acceptance still does not prove
-IR emission or ESL compatibility; record distance, alignment, ambient light,
-and visible display response in a bench record.
+The Pricehax plans split the 500-repeat wake into two bounded 250-repeat
+transmissions separated by the same 2 ms repeat gap. Parameters repeat 10
+times, the 40-byte data frame repeats 3 times, and refresh repeats 50 times.
+The deterministic full-screen all-white two-plane image compresses from 5,824
+raw bytes to 4 encoded bytes and one zero-padded 40-byte packet.
+All four tests remain finite and do not enable continuous carrier output.
+Local completion does not prove IR emission or ESL compatibility; record the
+selected profile, distance, alignment, ambient light, and visible response.
 
 ## Why this split
 

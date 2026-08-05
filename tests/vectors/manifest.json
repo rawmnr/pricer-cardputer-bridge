@@ -2,13 +2,14 @@
   "target": {
     "marking": "#19523-01",
     "barcode": "N4163114582613272",
-    "profile": "Pricer graphic medium 208x112 black/white/red",
+    "type_code": 1327,
+    "profile": "SmartTag HD M Red 208x112",
     "plid_internal_order": "3fb7b302",
     "plid_formula_result": "02b3b73f",
     "raw_frame_plid_order": "02b3b73f",
     "modulation": 16
   },
-  "profile_revision": "T008C-r1",
+  "profile_revision": "T008D-r1",
   "transmission": {
     "wake_repeats": 400,
     "wake_repeat_gap_us": 2000,
@@ -22,7 +23,9 @@
       "frame_length": 38,
       "payload_hex": "0100000001010101010101010101010101010101010101010101",
       "finalized_hex": "000000408502b3b73f170100000001010101010101010101010101010101010101010101f1c3",
-      "crc16_le_hex": "f1c3"
+      "crc16_le_hex": "f1c3",
+      "repeats": 400,
+      "inter_repeat_gap_us": 2000
     },
     {
       "name": "params-8x8-color.bin",
@@ -30,7 +33,9 @@
       "frame_length": 38,
       "payload_hex": "00140000010008000800000000000088000000000000",
       "finalized_hex": "000000408502b3b73f340000000500140000010008000800000000000088000000000000789a",
-      "crc16_le_hex": "789a"
+      "crc16_le_hex": "789a",
+      "repeats": 1,
+      "inter_repeat_gap_us": 0
     },
     {
       "name": "data-8x8-color.bin",
@@ -38,7 +43,9 @@
       "frame_length": 38,
       "payload_hex": "0000f00ff00ff00ff00ff00ff00ff00ff00f00000000",
       "finalized_hex": "000000408502b3b73f34000000200000f00ff00ff00ff00ff00ff00ff00ff00f00000000f280",
-      "crc16_le_hex": "f280"
+      "crc16_le_hex": "f280",
+      "repeats": 1,
+      "inter_repeat_gap_us": 0
     },
     {
       "name": "refresh.bin",
@@ -46,7 +53,108 @@
       "frame_length": 38,
       "payload_hex": "00000000000000000000000000000000000000000000",
       "finalized_hex": "000000408502b3b73f3400000001000000000000000000000000000000000000000000008c01",
-      "crc16_le_hex": "8c01"
+      "crc16_le_hex": "8c01",
+      "repeats": 1,
+      "inter_repeat_gap_us": 0
     }
-  ]
+  ],
+  "precir_control": {
+    "vectors": [
+      {
+        "name": "precir-wake.bin",
+        "command": "0x17",
+        "frame_length": 38,
+        "payload_hex": "0100000001010101010101010101010101010101010101010101",
+        "finalized_hex": "000000408502b3b73f170100000001010101010101010101010101010101010101010101f1c3",
+        "crc16_le_hex": "f1c3",
+        "repeats": 400,
+        "inter_repeat_gap_us": 2000
+      },
+      {
+        "name": "precir-params-8x8-color.bin",
+        "command": "0x05",
+        "frame_length": 38,
+        "payload_hex": "00140000010008000800000000000088000000000000",
+        "finalized_hex": "000000408502b3b73f340000000500140000010008000800000000000088000000000000789a",
+        "crc16_le_hex": "789a",
+        "repeats": 1,
+        "inter_repeat_gap_us": 0
+      },
+      {
+        "name": "precir-data-8x8-color.bin",
+        "command": "0x20",
+        "frame_length": 38,
+        "payload_hex": "0000f00ff00ff00ff00ff00ff00ff00ff00f00000000",
+        "finalized_hex": "000000408502b3b73f34000000200000f00ff00ff00ff00ff00ff00ff00ff00f00000000f280",
+        "crc16_le_hex": "f280",
+        "repeats": 1,
+        "inter_repeat_gap_us": 0
+      },
+      {
+        "name": "precir-refresh.bin",
+        "command": "0x01",
+        "frame_length": 38,
+        "payload_hex": "00000000000000000000000000000000000000000000",
+        "finalized_hex": "000000408502b3b73f3400000001000000000000000000000000000000000000000000008c01",
+        "crc16_le_hex": "8c01",
+        "repeats": 1,
+        "inter_repeat_gap_us": 0
+      }
+    ]
+  },
+  "pricehax_1327": {
+    "upstream_commit": "3043f964595f90fdb6835640275751277523f809",
+    "image": {
+      "description": "full-screen all-white, two planes",
+      "width": 208,
+      "height": 112,
+      "raw_bit_count": 46592,
+      "raw_byte_count": 5824,
+      "encoded_unpadded_length": 4,
+      "encoded_padded_length": 40,
+      "frame_count": 1
+    },
+    "vectors": [
+      {
+        "name": "pricehax-wake-97.bin",
+        "command": "0x97",
+        "frame_length": 36,
+        "payload_hex": "010000000101010101010101010101010101010101010101",
+        "finalized_hex": "000000408502b3b73f97010000000101010101010101010101010101010101010101402c",
+        "crc16_le_hex": "402c",
+        "repeats": 500,
+        "inter_repeat_gap_us": 2000
+      },
+      {
+        "name": "pricehax-params-page2.bin",
+        "command": "0x05",
+        "frame_length": 38,
+        "payload_hex": "000400020200d0007000000000000088000000000000",
+        "finalized_hex": "000000408502b3b73f3400000005000400020200d00070000000000000880000000000000f47",
+        "crc16_le_hex": "0f47",
+        "repeats": 10,
+        "inter_repeat_gap_us": 2000
+      },
+      {
+        "name": "pricehax-data-0000.bin",
+        "command": "0x20",
+        "frame_length": 58,
+        "payload_hex": "00008000b600000000000000000000000000000000000000000000000000000000000000000000000000",
+        "finalized_hex": "000000408502b3b73f340000002000008000b6000000000000000000000000000000000000000000000000000000000000000000000000007d18",
+        "crc16_le_hex": "7d18",
+        "repeats": 3,
+        "inter_repeat_gap_us": 2000
+      },
+      {
+        "name": "pricehax-refresh.bin",
+        "command": "0x01",
+        "frame_length": 34,
+        "payload_hex": "000000000000000000000000000000000000",
+        "finalized_hex": "000000408502b3b73f3400000001000000000000000000000000000000000000fbd5",
+        "crc16_le_hex": "fbd5",
+        "repeats": 50,
+        "inter_repeat_gap_us": 2000
+      }
+    ]
+  }
 }

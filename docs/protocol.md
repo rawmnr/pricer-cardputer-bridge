@@ -49,7 +49,7 @@ Extended HELLO payloads may append a 17-byte build identity suffix (total 29 byt
 | 12 | 1 | identity_version | `0x01` for the build identity layout |
 | 13 | 7 | git_sha | ASCII Git short SHA, or `unknown` when unavailable |
 | 20 | 1 | build_provenance | `0` unknown, `1` clean local, `2` dirty local, `3` CI |
-| 21 | 8 | pp16_profile_revision | ASCII waveform/vector profile identifier, currently `T008C-r1` |
+| 21 | 8 | pp16_profile_revision | ASCII waveform/vector profile identifier, currently `T008D-r1` |
 
 Hosts must continue accepting the original 12-byte HELLO payload. New hosts parse
 the suffix when present and display the exact firmware identity.
@@ -212,15 +212,19 @@ protocol byte. `make_raw_frame()` builds a raw command as:
 85 [02 B3 B7 3F] 34 00 00 00 [COMMAND] [BODY] [CRC16 little-endian]
 ```
 
-The wake command `0x17` uses the raw form. Parameter `0x05`, data `0x20`,
-and refresh `0x01` use the MCU form. Pinned PrecIR
-`tools_python/img2dm.py` packetizes image data in 20-byte (160-bit) units,
-zero-padding the encoded image group before calculating its length. The
-retained 8 × 8 two-plane raw input is therefore padded from 16 to 20 bytes.
-Its parameter body encodes length `0x0014`, unused `0`, raw compression `0`,
-page `1`, width `8`, and height `8`; its single data packet carries a
-two-byte index followed by exactly 20 image bytes. The application identity
-profile for these vectors is `T008C-r1`.
+The retained PrecIR control uses wake command `0x17`, a partial 8 × 8 image,
+page 1, and 20-byte packets. Its vectors remain unchanged from `T008C-r1`.
+
+The `T008D-r1` application identity adds a separate PricehaxBT type-1327
+profile derived from pinned commit
+`3043f964595f90fdb6835640275751277523f809`: wake command `0x97` with 20
+filler bytes and 500 total repetitions; full-screen 208 × 112 two-plane image;
+page 2; 40-byte indexed data packets; 10 parameter repetitions; 3 data
+repetitions; and 50 refresh repetitions with an 18-byte body. The deterministic
+all-white image contains 46,592 raw bits (5,824 bytes), encodes to 4 bytes, and
+is zero-padded to one 40-byte packet. Keyboard variants independently substitute
+the retained `0x17` wake or page 1. These application profiles do not change the
+provisional PP16 physical timing.
 
 ### Physical Validation Limitations
 
