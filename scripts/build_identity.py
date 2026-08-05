@@ -5,6 +5,7 @@ from __future__ import annotations
 import os
 import subprocess
 from pathlib import Path
+from build_identity_values import normalize_git_sha, select_provenance
 
 Import("env")
 
@@ -23,7 +24,7 @@ def git_output(repository: Path, *args: str) -> str | None:
     value = result.stdout.strip()
     return value or None
 
-def git_status(repository: Path) -> str | None:
+def git_status(repository: Path) -> tuple[bool, str]:
     try:
         result = subprocess.run(
             ["git", "status", "--porcelain"],
@@ -33,23 +34,20 @@ def git_status(repository: Path) -> str | None:
             text=True,
         )
     except (OSError, subprocess.CalledProcessError):
-        return None
-    return result.stdout.strip()
+        return False, ""
+    return True, result.stdout.strip()
 
 
 project_dir = Path(env.subst("$PROJECT_DIR"))
 repository = project_dir.parent
-short_sha = (git_output(repository, "rev-parse", "--short=7", "HEAD") or "unknown")[:7]
-status = git_status(repository)
-
-if os.environ.get("GITHUB_ACTIONS", "").lower() == "true":
-    provenance_code = 3  # CI
-elif short_sha == "unknown" or status is None:
-    provenance_code = 0  # unknown/local without Git metadata
-elif status:
-    provenance_code = 2  # dirty local tree
-else:
-    provenance_code = 1  # clean local tree
+short_sha = normalize_git_sha(git_output(repository, "rev-parse", "--short=7", "HEAD"))
+status_ok, status = git_status(repository)
+provenance_code = select_provenance(
+    github_actions=os.environ.get("GITHUB_ACTIONS", "").lower() == "true",
+    short_sha=short_sha,
+    status_ok=status_ok,
+    status_text=status,
+)
 
 env.Append(
     CPPDEFINES=[

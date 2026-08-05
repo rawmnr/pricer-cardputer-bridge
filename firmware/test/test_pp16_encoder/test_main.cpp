@@ -127,6 +127,13 @@ void test_encode_capacity_boundary(void) {
     TEST_ASSERT_EQUAL_UINT32(21, frame.symbols[512].burst_us);
     TEST_ASSERT_EQUAL_UINT32(0, frame.symbols[512].gap_us);
     TEST_ASSERT_EQUAL_UINT32((256U * 2U * (21U + 75U)) + 21U, frame.total_duration_us);
+    std::uint32_t elapsed = 0;
+    for (std::size_t i = 0; i < frame.symbol_count; ++i) {
+        if (i == 512) {
+            TEST_ASSERT_EQUAL_UINT32(256U * 2U * (21U + 75U), elapsed);
+        }
+        elapsed += frame.symbols[i].total_us();
+    }
 
     status = encode_frame(max_payload, kMaxFrameBytes + 1, profile, frame);
     TEST_ASSERT_EQUAL(static_cast<int>(Status::kPayloadTooLarge), static_cast<int>(status));

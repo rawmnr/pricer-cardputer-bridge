@@ -106,6 +106,7 @@ def test_encode_multiple_bytes_and_optional_preamble() -> None:
         profile.symbol_timing(0),
     ]
     assert symbols[-1] == SymbolTiming(21, 0)
+    assert burst_starts(symbols) == [0, 144, 240, 368, 416]
 
     profile_pt = PP16TimingProfile(
         preamble_burst_us=500,
@@ -144,6 +145,7 @@ def test_long_frame_capacity_boundary() -> None:
     assert calculate_frame_duration_us(max_payload, profile) == (
         MAX_FRAME_BYTES * 2 * (21 + PRECIR_NIBBLE_GAPS_US[10]) + 21
     )
+    assert burst_starts(symbols)[-1] == MAX_FRAME_BYTES * 2 * (21 + PRECIR_NIBBLE_GAPS_US[10])
 
     oversized_payload = b"\xaa" * (MAX_FRAME_BYTES + 1)
     with pytest.raises(PP16EncoderError, match="exceeds maximum allowed capacity"):

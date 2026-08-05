@@ -1,0 +1,46 @@
+{
+  "target": {
+    "marking": "#19523-01",
+    "barcode": "N4163114582613272",
+    "profile": "Pricer graphic medium 208x112 black/white/red",
+    "plid_formula_result": "02b3b73f",
+    "raw_frame_plid_order": "3fb7b302",
+    "modulation": 16
+  },
+  "transmission": {
+    "wake_repeats": 100,
+    "wake_repeat_gap_us": 2000,
+    "image_repeats": 1,
+    "image_repeat_gap_us": 0
+  },
+  "vectors": [
+    {
+      "name": "wake.bin",
+      "command": "0x17",
+      "payload_hex": "010000000101010101010101010101010101010101010101010101",
+      "finalized_hex": "00000040853fb7b302170100000001010101010101010101010101010101010101010101e91d",
+      "crc16_le_hex": "e91d"
+    },
+    {
+      "name": "params-8x8-color.bin",
+      "command": "0x05",
+      "payload_hex": "00100001000800080000000000000088000000000000",
+      "finalized_hex": "00000040853fb7b302050010000100080008000000000000880000000000005d5e",
+      "crc16_le_hex": "5d5e"
+    },
+    {
+      "name": "data-8x8-color.bin",
+      "command": "0x20",
+      "payload_hex": "0000f00ff00ff00ff00ff00ff00ff00ff00f",
+      "finalized_hex": "00000040853fb7b302200000f00ff00ff00ff00f0ff00ff00ff00ff007d1",
+      "crc16_le_hex": "7d01"
+    },
+    {
+      "name": "refresh.bin",
+      "command": "0x01",
+      "payload_hex": "00000000000000000000000000000000000000000000",
+      "finalized_hex": "00000040853fb7b3020100000000000000000000000000000000000000000000d674",
+      "crc16_le_hex": "d674"
+    }
+  ]
+}

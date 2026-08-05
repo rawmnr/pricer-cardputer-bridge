@@ -74,6 +74,19 @@ physical retest must use the extended identity response and record its values.
 PlatformIO injects the seven-character Git SHA during builds. A local build
 without Git metadata reports `unknown`; it never reuses a previous SHA.
 
+Derive the expected short SHA from the checkout used to build the selected
+binary, then compare it to the probe output and Cardputer screen:
+
+```powershell
+$expectedSha = (git rev-parse --short=7 HEAD).Trim().Substring(0, 7)
+Write-Host "Expected Git SHA: $expectedSha"
+```
+
+Stop the retest if the reported `Git SHA` differs from `$expectedSha`, is
+`unknown`, or does not match the seven-character prefix in the selected CI
+artifact filename. Recording both values is required; recording an artifact
+hash alone does not prove that M5Launcher launched that artifact.
+
 ### 3A. Install through microSD
 
 1. Copy the `.bin` to the Cardputer microSD card.
