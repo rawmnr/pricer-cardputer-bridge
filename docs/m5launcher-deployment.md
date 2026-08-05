@@ -52,6 +52,28 @@ if ($bytes.Length -eq 0 -or $bytes[0] -ne 0xE9) {
 Get-FileHash $path -Algorithm SHA256
 ```
 
+## Verify running build identity
+
+Before any physical ESL test, record the exact application artifact SHA-256 and
+the identity returned by the running application:
+
+```powershell
+uv run --project .\pc eslbridge probe --port COM7
+```
+
+The probe must show:
+
+- semantic firmware version;
+- `Git SHA`;
+- `Build provenance` (`clean`, `dirty`, `ci`, or `unknown`);
+- `PP16 profile` (currently `T006B-r1`).
+
+The Cardputer ready screen shows the same Git SHA, provenance, and PP16 profile.
+The host accepts the legacy 12-byte HELLO response for compatibility, but a
+physical retest must use the extended identity response and record its values.
+PlatformIO injects the seven-character Git SHA during builds. A local build
+without Git metadata reports `unknown`; it never reuses a previous SHA.
+
 ### 3A. Install through microSD
 
 1. Copy the `.bin` to the Cardputer microSD card.

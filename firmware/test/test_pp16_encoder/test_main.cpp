@@ -43,14 +43,13 @@ void test_invalid_profile_rejection(void) {
 void test_nibble_gap_calculation(void) {
     TimingProfile profile = make_provisional_profile();
     for (std::uint8_t n = 0; n < 16; ++n) {
-        std::uint32_t expected_total = kPrecirNibbleTotalDurationsUs[n];
-        std::uint32_t expected_gap = expected_total - 21;
+        const std::uint32_t expected_gap = kPrecirNibbleGapsUs[n];
         TEST_ASSERT_EQUAL_UINT32(expected_gap, profile.symbol_gap_us(n));
 
         Pp16Symbol sym = profile.symbol_timing(n);
         TEST_ASSERT_EQUAL_UINT32(21, sym.burst_us);
         TEST_ASSERT_EQUAL_UINT32(expected_gap, sym.gap_us);
-        TEST_ASSERT_EQUAL_UINT32(expected_total, sym.total_us());
+        TEST_ASSERT_EQUAL_UINT32(21 + expected_gap, sym.total_us());
     }
 }
 
@@ -61,20 +60,44 @@ void test_encode_single_byte(void) {
 
     Status status = encode_frame(payload, 1, profile, frame);
     TEST_ASSERT_EQUAL(static_cast<int>(Status::kOk), static_cast<int>(status));
-    TEST_ASSERT_EQUAL_UINT32(2, frame.symbol_count);
+    TEST_ASSERT_EQUAL_UINT32(3, frame.symbol_count);
 
-    // 0: Low nibble (2)
     TEST_ASSERT_EQUAL_UINT32(21, frame.symbols[0].burst_us);
-    TEST_ASSERT_EQUAL_UINT32(profile.symbol_gap_us(2), frame.symbols[0].gap_us);
-
-    // 1: High nibble (1)
+    TEST_ASSERT_EQUAL_UINT32(35, frame.symbols[0].gap_us);
     TEST_ASSERT_EQUAL_UINT32(21, frame.symbols[1].burst_us);
-    TEST_ASSERT_EQUAL_UINT32(profile.symbol_gap_us(1), frame.symbols[1].gap_us);
+    TEST_ASSERT_EQUAL_UINT32(51, frame.symbols[1].gap_us);
+    TEST_ASSERT_EQUAL_UINT32(21, frame.symbols[2].burst_us);
+    TEST_ASSERT_EQUAL_UINT32(0, frame.symbols[2].gap_us);
 
-    std::uint32_t expected_total = frame.symbols[0].total_us() + frame.symbols[1].total_us();
-    TEST_ASSERT_EQUAL_UINT32(expected_total, frame.total_duration_us);
+    TEST_ASSERT_EQUAL_UINT32(56, frame.symbols[1].total_us());
+    TEST_ASSERT_EQUAL_UINT32(21, frame.symbols[2].total_us());
+    TEST_ASSERT_EQUAL_UINT32(48 + 56 + 21, frame.total_duration_us);
 }
 
+
+void test_golden_cumulative_burst_starts(void) {
+    TimingProfile profile = make_provisional_profile();
+    const std::uint8_t payloads[][2] = {{0x00, 0x00}, {0x01, 0x00}, {0x12, 0x00}, {0xA5, 0x0F}};
+    const std::size_t lengths[] = {1, 1, 1, 2};
+    const std::uint32_t expected[][5] = {
+        {0, 48, 96, 0, 0},
+        {0, 72, 120, 0, 0},
+        {0, 56, 128, 0, 0},
+        {0, 144, 240, 368, 416},
+    };
+
+    for (std::size_t case_index = 0; case_index < 4; ++case_index) {
+        EncodedFrame frame{};
+        TEST_ASSERT_EQUAL(
+            static_cast<int>(Status::kOk),
+            static_cast<int>(encode_frame(payloads[case_index], lengths[case_index], profile, frame)));
+        std::uint32_t elapsed = 0;
+        for (std::size_t i = 0; i < frame.symbol_count; ++i) {
+            TEST_ASSERT_EQUAL_UINT32(expected[case_index][i], elapsed);
+            elapsed += frame.symbols[i].total_us();
+        }
+    }
+}
 void test_encode_empty_and_null_payload(void) {
     TimingProfile profile = make_provisional_profile();
     EncodedFrame frame{};
@@ -97,12 +120,11 @@ void test_encode_capacity_boundary(void) {
         max_payload[i] = 0xAA;
     }
 
-    // 256 bytes payload -> (256*2) = 512 symbols
+    // 256 bytes payload -> (256*2) data symbols plus one terminal burst.
     Status status = encode_frame(max_payload, kMaxFrameBytes, profile, frame);
     TEST_ASSERT_EQUAL(static_cast<int>(Status::kOk), static_cast<int>(status));
-    TEST_ASSERT_EQUAL_UINT32(512, frame.symbol_count);
+    TEST_ASSERT_EQUAL_UINT32(513, frame.symbol_count);
 
-    // 257 bytes payload -> payload too large
     status = encode_frame(max_payload, kMaxFrameBytes + 1, profile, frame);
     TEST_ASSERT_EQUAL(static_cast<int>(Status::kPayloadTooLarge), static_cast<int>(status));
 }
@@ -128,6 +150,7 @@ void run_all_tests(void) {
     RUN_TEST(test_invalid_profile_rejection);
     RUN_TEST(test_nibble_gap_calculation);
     RUN_TEST(test_encode_single_byte);
+    RUN_TEST(test_golden_cumulative_burst_starts);
     RUN_TEST(test_encode_empty_and_null_payload);
     RUN_TEST(test_encode_capacity_boundary);
     RUN_TEST(test_symbol_to_ticks_conversion);

@@ -41,6 +41,10 @@ def test_cli_probe_autodiscovery_uses_reported_port() -> None:
         max_payload=4096,
         ir_gpio=44,
         reserved=0,
+        identity_version=1,
+        git_sha="abc1234",
+        build_provenance="ci",
+        pp16_profile_revision="T006B-r1",
     )
     fake_transport = FakeTransport()
     fake_discovered = DiscoveredBridge(port="COM3", transport=fake_transport, hello=hello)  # type: ignore[arg-type]
@@ -49,6 +53,8 @@ def test_cli_probe_autodiscovery_uses_reported_port() -> None:
         result = runner.invoke(app, ["probe"])
         assert result.exit_code == 0
         assert "COM3" in result.stdout
+        assert "abc1234" in result.stdout
+        assert "T006B-r1" in result.stdout
         mock_discover.assert_called_once_with(port=None, timeout_s=3.0)
         assert fake_transport.closed is True
 

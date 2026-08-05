@@ -69,11 +69,15 @@ A complete PP16 frame on the wire consists of:
    - **Initial Value:** `0x8408`.
 
 ### 3.2 Symbol Modulation & Nibble Transmission Order
-- **Symbol Duration:** Each 4-bit nibble ($0\text{..}15$) maps to a total symbol duration (27 us to 147 us) with a fixed carrier pulse width of 21 us.
-- **Nibble Order:** Payload bytes are split and transmitted **least-significant nibble first**:
+- **Post-burst gap:** Each 4-bit nibble ($0\text{..}15$) selects a post-burst gap
+  from the published table. The fixed carrier burst is 21 us; the table values
+  are not total symbol durations.
+- **Nibble Order:** Payload bytes are split and transmitted **least-significant
+  nibble first**:
   - Low nibble: `byte & 0x0F`
   - High nibble: `(byte >> 4) & 0x0F`
-  - Upstream source verification: `hardware/esl_blaster/FW02/Src/main.c` (lines 145–150).
+- **Terminal pulse:** A final 21 us carrier burst follows the high nibble of the
+  final byte. For an N-byte payload this yields `2N + 1` carrier bursts.
 
 ### 3.3 Discrepancy Analysis: The MCU Envelope Header (`0x34 0x00 0x00 0x00`)
 In PrecIR upstream source `tools_python/pr.py`:
@@ -136,6 +140,15 @@ Stripping `0x34 0x00 0x00 0x00` under the assumption that `0x34` was an error di
 ### 5.2 Wake-up Sequence Duration
 - **Wake-up Command:** `85 [PLID] 17 01 [KEY] [PAYLOAD] [CRC16]` (23-byte payload).
 - **Duration Requirement:** Because tag MCUs spend most of their time in ultra-low-power sleep, the wake-up frame must be transmitted in a continuous loop for **up to 4 seconds** (e.g., 400 frame repeats) before sending image data.
+
+### 5.3 Corrected Inter-burst Timing
+
+The prior project encoder subtracted the 21 us burst from each published table
+value. Issue T006B corrects this: each nibble now emits a 21 us burst followed
+by the table gap, then a final 21 us terminal burst. The resulting burst-start
+intervals are 48 us for nibble `0x0`, 72 us for `0x1`, and 56 us for `0x2`.
+This timing correction is source-derived and remains physically unvalidated on
+the target ESL.
 
 ---
 

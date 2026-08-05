@@ -42,6 +42,18 @@ Response payload:
 | ir_gpio | 1 | configured IR GPIO |
 | reserved | 1 | zero |
 
+Extended HELLO payloads may append a 17-byte build identity suffix (total 29 bytes):
+
+| Offset | Size | Field | Description |
+|---:|---:|---|---|
+| 12 | 1 | identity_version | `0x01` for the build identity layout |
+| 13 | 7 | git_sha | ASCII Git short SHA, or `unknown` when unavailable |
+| 20 | 1 | build_provenance | `0` unknown, `1` clean local, `2` dirty local, `3` CI |
+| 21 | 8 | pp16_profile_revision | ASCII waveform profile identifier, currently `T006B-r1` |
+
+Hosts must continue accepting the original 12-byte HELLO payload. New hosts parse
+the suffix when present and display the exact firmware identity.
+
 Capability bits:
 
 - bit 0: bounded carrier test;
@@ -122,34 +134,39 @@ Default profile timing values are derived directly from published **PrecIR** pri
 | `symbol_burst_us` | 21 us | Fixed carrier pulse width per data symbol |
 | `is_provisional` | `true` | Indicates profile is untested on target hardware |
 
-### Nibble Symbol Duration Table
+### PP16 Symbol Encoder
 
-Each 4-bit nibble $n \in [0, 15]$ maps directly to a 16-entry total symbol duration table in microseconds:
+Each 4-bit nibble $n \in [0, 15]$ maps directly to a 16-entry **post-burst gap**
+table in microseconds:
 
-| Nibble | Hex | Total Symbol Duration (us) | Gap Duration (us) = Total - 21 us |
+| Nibble | Hex | Post-burst Gap (us) | Burst-start interval (us) |
 |:-:|:-:|:-:|:-:|
-| 0 | `0x0` | 27 | 6 |
-| 1 | `0x1` | 51 | 30 |
-| 2 | `0x2` | 35 | 14 |
-| 3 | `0x3` | 43 | 22 |
-| 4 | `0x4` | 147 | 126 |
-| 5 | `0x5` | 123 | 102 |
-| 6 | `0x6` | 139 | 118 |
-| 7 | `0x7` | 131 | 110 |
-| 8 | `0x8` | 83 | 62 |
-| 9 | `0x9` | 59 | 38 |
-| 10 | `0xA` | 75 | 54 |
-| 11 | `0xB` | 67 | 46 |
-| 12 | `0xC` | 91 | 70 |
-| 13 | `0xD` | 115 | 94 |
-| 14 | `0xE` | 99 | 78 |
-| 15 | `0xF` | 107 | 86 |
+| 0 | `0x0` | 27 | 48 |
+| 1 | `0x1` | 51 | 72 |
+| 2 | `0x2` | 35 | 56 |
+| 3 | `0x3` | 43 | 64 |
+| 4 | `0x4` | 147 | 168 |
+| 5 | `0x5` | 123 | 144 |
+| 6 | `0x6` | 139 | 160 |
+| 7 | `0x7` | 131 | 152 |
+| 8 | `0x8` | 83 | 104 |
+| 9 | `0x9` | 59 | 80 |
+| 10 | `0xA` | 75 | 96 |
+| 11 | `0xB` | 67 | 88 |
+| 12 | `0xC` | 91 | 112 |
+| 13 | `0xD` | 115 | 136 |
+| 14 | `0xE` | 99 | 120 |
+| 15 | `0xF` | 107 | 128 |
 
-### Byte & Symbol Mapping
-
-1. Each payload byte is split into low-nibble `byte & 0x0F` then high-nibble `(byte >> 4) & 0x0F`, matching the PrecIR transmitter's least-significant-nibble-first order.
-2. Each nibble $n$ emits an IR carrier burst of `symbol_burst_us` (21 us) followed by space/gap of `nibble_durations_us[n] - symbol_burst_us`.
-3. Optional preamble and trailer symbols may be configured if required by future tag profiles; by default, no preamble/trailer is assumed.
+1. Each payload byte is split into low-nibble `byte & 0x0F` then high-nibble
+   `(byte >> 4) & 0x0F`, matching the PrecIR transmitter's least-significant-
+   nibble-first order.
+2. Each nibble emits a 21 us carrier burst followed by the selected post-burst
+   gap. The table values are gaps, not total symbol durations.
+3. One terminal 21 us carrier burst follows the final nibble. The default frame
+   therefore emits `2N + 1` bursts for `N` payload bytes.
+4. Optional preamble and trailer symbols may be configured for future profiles;
+   the terminal burst remains mandatory.
 
 ### PrecIR Interoperability Adapter & Frame Finalization
 

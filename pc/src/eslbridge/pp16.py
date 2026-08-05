@@ -23,13 +23,13 @@ MAX_FRAME_BYTES: Final[int] = 256
 MAX_RMT_TICKS_PER_PHASE: Final[int] = 32_767
 TICKS_PER_MICROSECOND: Final[int] = 10
 
-# PrecIR prior art nibble total symbol durations in microseconds (0x0..0xF)
+# PrecIR prior art post-burst gaps in microseconds (0x0..0xF)
 # Source: PrecIR commit b09951e2b3d2741e4ca08f929eafef849f6fc006
 # (hardware/esl_blaster/FW02/Src/main.c; RE page https://www.furrtek.org/index.php?a=esl)
 # GPL-3.0 license.
-# Durations: 0x0=27, 0x1=51, 0x2=35, 0x3=43, 0x4=147, 0x5=123, 0x6=139, 0x7=131,
-#            0x8=83, 0x9=59, 0xA=75, 0xB=67, 0xC=91, 0xD=115, 0xE=99, 0xF=107
-PRECIR_NIBBLE_TOTAL_DURATIONS_US: Final[tuple[int, ...]] = (
+# Gaps: 0x0=27, 0x1=51, 0x2=35, 0x3=43, 0x4=147, 0x5=123, 0x6=139, 0x7=131,
+#       0x8=83, 0x9=59, 0xA=75, 0xB=67, 0xC=91, 0xD=115, 0xE=99, 0xF=107
+PRECIR_NIBBLE_GAPS_US: Final[tuple[int, ...]] = (
     27,
     51,
     35,
@@ -79,7 +79,7 @@ class PP16TimingProfile:
         carrier_frequency_hz: Target IR carrier frequency (500 kHz .. 2 MHz).
         duty_percent: Carrier duty cycle (10% .. 60%).
         symbol_burst_us: Fixed burst duration in microseconds per data symbol.
-        nibble_durations_us: Tuple of 16 total symbol durations (us) for nibbles 0..15.
+        nibble_gaps_us: Tuple of 16 post-burst gap durations (us) for nibbles 0..15.
         preamble_burst_us: Optional preamble pulse duration in microseconds (0 to disable).
         preamble_gap_us: Optional preamble space duration in microseconds.
         trailer_burst_us: Optional trailer pulse duration in microseconds (0 to disable).
@@ -91,7 +91,7 @@ class PP16TimingProfile:
     carrier_frequency_hz: int = PRECIR_CARRIER_HZ
     duty_percent: int = 50
     symbol_burst_us: int = PRECIR_BURST_US
-    nibble_durations_us: tuple[int, ...] = PRECIR_NIBBLE_TOTAL_DURATIONS_US
+    nibble_gaps_us: tuple[int, ...] = PRECIR_NIBBLE_GAPS_US
     preamble_burst_us: int = 0
     preamble_gap_us: int = 0
     trailer_burst_us: int = 0
@@ -113,16 +113,14 @@ class PP16TimingProfile:
             )
         if self.symbol_burst_us <= 0 or self.symbol_burst_us > 1000:
             raise PP16EncoderError(f"invalid symbol_burst_us {self.symbol_burst_us}")
-        if len(self.nibble_durations_us) != 16:
+        if len(self.nibble_gaps_us) != 16:
             raise PP16EncoderError(
-                "nibble_durations_us must contain exactly 16 values, "
-                f"got {len(self.nibble_durations_us)}"
+                f"nibble_gaps_us must contain exactly 16 values, got {len(self.nibble_gaps_us)}"
             )
-        for idx, total_us in enumerate(self.nibble_durations_us):
-            if total_us <= self.symbol_burst_us or total_us > 5000:
+        for idx, gap_us in enumerate(self.nibble_gaps_us):
+            if gap_us <= 0 or gap_us > 5000:
                 raise PP16EncoderError(
-                    f"nibble_durations_us[{idx}] value {total_us} us invalid "
-                    f"for burst {self.symbol_burst_us} us"
+                    f"nibble_gaps_us[{idx}] value {gap_us} us invalid (must be 1..5000 us)"
                 )
         if self.preamble_burst_us > 5000 or self.preamble_gap_us > 10000:
             raise PP16EncoderError(
@@ -134,13 +132,13 @@ class PP16TimingProfile:
             )
 
     def symbol_gap_us(self, nibble: int) -> int:
-        """Return gap duration in microseconds for a 4-bit nibble (0..15)."""
+        """Return post-burst gap duration in microseconds for nibble 0..15."""
         if not (0 <= nibble <= 15):
             raise PP16EncoderError(f"nibble {nibble} out of range 0..15")
-        return self.nibble_durations_us[nibble] - self.symbol_burst_us
+        return self.nibble_gaps_us[nibble]
 
     def symbol_timing(self, nibble: int) -> SymbolTiming:
-        """Return SymbolTiming (burst_us, gap_us) for a 4-bit nibble (0..15)."""
+        """Return SymbolTiming (burst_us, post-burst gap_us) for nibble 0..15."""
         return SymbolTiming(self.symbol_burst_us, self.symbol_gap_us(nibble))
 
 
@@ -188,6 +186,9 @@ def encode_pp16_symbols(
 
         symbols.append(profile.symbol_timing(low_nibble))
         symbols.append(profile.symbol_timing(high_nibble))
+
+    # A terminal carrier burst marks the end of the final nibble.
+    symbols.append(SymbolTiming(profile.symbol_burst_us, 0))
 
     if profile.trailer_burst_us > 0:
         symbols.append(SymbolTiming(profile.trailer_burst_us, profile.trailer_gap_us))

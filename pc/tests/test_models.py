@@ -58,6 +58,38 @@ def test_hello_decode_and_identity_valid() -> None:
     info.validate_identity(port="COM3")
 
 
+def test_hello_decode_extended_build_identity() -> None:
+    payload = (
+        bytes([1, 0, 1, 0])
+        + (9).to_bytes(4, "little")
+        + (4096).to_bytes(2, "little")
+        + bytes([44, 0, 1])
+        + b"abc1234"
+        + bytes([3])
+        + b"T006B-r1"
+    )
+    info = HelloInfo.decode(payload)
+    assert info.identity_version == 1
+    assert info.git_sha == "abc1234"
+    assert info.build_provenance == "ci"
+    assert info.pp16_profile_revision == "T006B-r1"
+    info.validate_identity(port="COM3")
+
+
+def test_hello_legacy_decode_has_explicit_identity_fallback() -> None:
+    payload = (
+        bytes([1, 0, 1, 0])
+        + (9).to_bytes(4, "little")
+        + (4096).to_bytes(2, "little")
+        + bytes([44, 0])
+    )
+    info = HelloInfo.decode(payload)
+    assert info.identity_version == 0
+    assert info.git_sha == "unknown"
+    assert info.build_provenance == "legacy"
+    assert info.pp16_profile_revision == "unknown"
+
+
 def test_hello_identity_valid_with_future_capability_bits() -> None:
     info = HelloInfo(
         protocol_version=1,

@@ -13,24 +13,33 @@ void DeviceUi::begin() {
     M5Cardputer.Display.fillScreen(TFT_BLACK);
 }
 
-void DeviceUi::show_ready(const std::uint8_t ir_gpio) {
+void DeviceUi::show_ready(
+    const std::uint8_t ir_gpio,
+    const char* firmware_version,
+    const char* git_sha,
+    const char* build_provenance,
+    const char* pp16_profile_revision) {
     M5Cardputer.Display.fillScreen(TFT_BLACK);
     M5Cardputer.Display.setCursor(8, 8);
     M5Cardputer.Display.println("Pricer ESL Bridge");
-    M5Cardputer.Display.println("USB: waiting");
+    M5Cardputer.Display.printf("FW: %s\n", firmware_version);
+    M5Cardputer.Display.printf("GIT: %s\n", git_sha);
+    M5Cardputer.Display.printf("BUILD: %s\n", build_provenance);
+    M5Cardputer.Display.printf("PP16: %s\n", pp16_profile_revision);
     M5Cardputer.Display.printf("IR GPIO: %u\n", ir_gpio);
-    M5Cardputer.Display.println("PP16: pending");
+    M5Cardputer.Display.println("USB: waiting");
 }
 
 void DeviceUi::show_command(
     const protocol::Command command,
     const protocol::Status status,
     const std::uint32_t tx_count) {
-    M5Cardputer.Display.fillRect(0, 48, M5Cardputer.Display.width(), 70, TFT_BLACK);
-    M5Cardputer.Display.setCursor(8, 48);
+    M5Cardputer.Display.fillRect(0, 104, M5Cardputer.Display.width(), 31, TFT_BLACK);
+    M5Cardputer.Display.setCursor(8, 104);
     M5Cardputer.Display.printf("CMD: 0x%02X\n", static_cast<unsigned>(command));
-    M5Cardputer.Display.printf("STATUS: 0x%02X\n", static_cast<unsigned>(status));
-    M5Cardputer.Display.printf("TX count: %lu\n", static_cast<unsigned long>(tx_count));
+    M5Cardputer.Display.printf("STATUS: 0x%02X TX:%lu\n",
+                               static_cast<unsigned>(status),
+                               static_cast<unsigned long>(tx_count));
 }
 
 void DeviceUi::update() {

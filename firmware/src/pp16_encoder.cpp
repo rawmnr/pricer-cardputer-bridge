@@ -43,7 +43,12 @@ Status encode_frame(
         out_frame.total_duration_us += s_high.total_us();
     }
 
-    // Optional trailer
+    // Required terminal carrier burst marks the end of the final nibble.
+    const Pp16Symbol terminal{profile.symbol_burst_us, 0};
+    out_frame.symbols[out_frame.symbol_count++] = terminal;
+    out_frame.total_duration_us += terminal.total_us();
+
+    // Optional trailer after the required terminal burst.
     if (profile.trailer_burst_us > 0) {
         const Pp16Symbol trailer{profile.trailer_burst_us, profile.trailer_gap_us};
         out_frame.symbols[out_frame.symbol_count++] = trailer;

@@ -4,6 +4,7 @@
 
 #include "app_config.hpp"
 #include "bridge_protocol.hpp"
+#include "build_identity.hpp"
 #include "device_ui.hpp"
 #include "ir_transmitter.hpp"
 
@@ -21,6 +22,18 @@ eslbridge::protocol::DeviceStatus device_status;
 eslbridge::IrTransmitter transmitter;
 eslbridge::DeviceUi ui;
 std::array<std::uint8_t, eslbridge::protocol::kMaxFrameSize> response_buffer{};
+const char* build_provenance_name() {
+    switch (eslbridge::config::kBuildProvenanceCode) {
+        case 1:
+            return "clean";
+        case 2:
+            return "dirty";
+        case 3:
+            return "ci";
+        default:
+            return "unknown";
+    }
+}
 
 void send_response(
     const Command command,
@@ -50,7 +63,7 @@ void handle_message(const eslbridge::protocol::MessageView& message) {
                 send_response(message.command, device_status.last_error, message.sequence);
                 break;
             }
-            std::array<std::uint8_t, 12> payload{};
+            std::array<std::uint8_t, 29> payload{};
             payload[0] = eslbridge::config::kProtocolVersion;
             payload[1] = 0;
             payload[2] = 1;
@@ -62,6 +75,15 @@ void handle_message(const eslbridge::protocol::MessageView& message) {
                 static_cast<std::uint16_t>(eslbridge::config::kMaxPayload));
             payload[10] = eslbridge::config::kIrGpio;
             payload[11] = 0;
+            payload[12] = eslbridge::config::kBuildIdentityVersion;
+            for (std::size_t i = 0; i < 7; ++i) {
+                payload[13 + i] = static_cast<std::uint8_t>(eslbridge::config::kBuildGitSha[i]);
+            }
+            payload[20] = eslbridge::config::kBuildProvenanceCode;
+            for (std::size_t i = 0; i < 8; ++i) {
+                payload[21 + i] = static_cast<std::uint8_t>(
+                    eslbridge::config::kPp16ProfileRevision[i]);
+            }
             send_response(
                 message.command,
                 Status::kOk,
@@ -147,7 +169,12 @@ void handle_message(const eslbridge::protocol::MessageView& message) {
 
 void setup() {
     ui.begin();
-    ui.show_ready(eslbridge::config::kIrGpio);
+    ui.show_ready(
+        eslbridge::config::kIrGpio,
+        PROJECT_VERSION,
+        eslbridge::config::kBuildGitSha,
+        build_provenance_name(),
+        eslbridge::config::kPp16ProfileRevision);
 
     Serial.begin(115200);
     const auto init_status = transmitter.begin();

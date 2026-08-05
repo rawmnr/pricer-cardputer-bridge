@@ -8,6 +8,7 @@ from dataclasses import dataclass
 from .protocol import ProtocolError
 
 _HELLO = struct.Struct("<BBBBIHBB")
+_HELLO_IDENTITY = struct.Struct("<BBBBIHBBB7sB8s")
 _STATUS = struct.Struct("<BBBBI")
 _CARRIER_TEST = struct.Struct("<IIB3x")
 _PRICER_FRAME_HEADER = struct.Struct("<BBHIH")
@@ -19,6 +20,12 @@ MAX_PRICER_FRAME_BYTES = 256
 MIN_PRICER_REPEATS = 1
 MAX_PRICER_REPEATS = 100
 MAX_INTER_REPEAT_GAP_US = 1_000_000
+BUILD_PROVENANCE_NAMES = {
+    0: "unknown",
+    1: "clean",
+    2: "dirty",
+    3: "ci",
+}
 
 
 @dataclass(frozen=True, slots=True)
@@ -29,15 +36,54 @@ class HelloInfo:
     max_payload: int
     ir_gpio: int
     reserved: int = 0
+    identity_version: int = 0
+    git_sha: str = "unknown"
+    build_provenance: str = "legacy"
+    pp16_profile_revision: str = "unknown"
 
     @classmethod
     def decode(cls, payload: bytes) -> HelloInfo:
-        if len(payload) != _HELLO.size:
-            raise ProtocolError(f"HELLO payload must be {_HELLO.size} bytes")
-        protocol, major, minor, patch, capabilities, max_payload, ir_gpio, reserved = _HELLO.unpack(
-            payload
+        if len(payload) == _HELLO.size:
+            values = _HELLO.unpack(payload)
+            protocol, major, minor, patch, capabilities, max_payload, ir_gpio, reserved = values
+            return cls(
+                protocol, (major, minor, patch), capabilities, max_payload, ir_gpio, reserved
+            )
+        if len(payload) != _HELLO_IDENTITY.size:
+            raise ProtocolError(
+                f"HELLO payload must be {_HELLO.size} or {_HELLO_IDENTITY.size} bytes"
+            )
+        (
+            protocol,
+            major,
+            minor,
+            patch,
+            capabilities,
+            max_payload,
+            ir_gpio,
+            reserved,
+            identity_version,
+            raw_git_sha,
+            provenance_code,
+            raw_profile,
+        ) = _HELLO_IDENTITY.unpack(payload)
+        try:
+            git_sha = raw_git_sha.decode("ascii").rstrip("\x00")
+            profile_revision = raw_profile.decode("ascii").rstrip("\x00")
+        except UnicodeDecodeError as exc:
+            raise ProtocolError("HELLO build identity is not ASCII") from exc
+        return cls(
+            protocol,
+            (major, minor, patch),
+            capabilities,
+            max_payload,
+            ir_gpio,
+            reserved,
+            identity_version,
+            git_sha or "unknown",
+            BUILD_PROVENANCE_NAMES.get(provenance_code, "unknown"),
+            profile_revision or "unknown",
         )
-        return cls(protocol, (major, minor, patch), capabilities, max_payload, ir_gpio, reserved)
 
     def is_valid_identity(self) -> tuple[bool, str]:
         if self.protocol_version != 1:
@@ -48,6 +94,8 @@ class HelloInfo:
             return False, f"unexpected IR GPIO {self.ir_gpio} (expected 44)"
         if self.reserved != 0:
             return False, f"non-zero reserved byte {self.reserved}"
+        if self.identity_version not in (0, 1):
+            return False, f"unsupported build identity version {self.identity_version}"
         required_capabilities = 0x09
         if (self.capabilities & required_capabilities) != required_capabilities:
             return False, f"missing required capabilities 0x09 (got 0x{self.capabilities:08X})"

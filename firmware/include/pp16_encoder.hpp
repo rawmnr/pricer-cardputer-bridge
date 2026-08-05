@@ -7,7 +7,7 @@
 namespace eslbridge::pp16 {
 
 constexpr std::size_t kMaxFrameBytes = 256;
-constexpr std::size_t kMaxSymbolsPerFrame = (kMaxFrameBytes * 2) + 2;
+constexpr std::size_t kMaxSymbolsPerFrame = (kMaxFrameBytes * 2) + 3;
 
 constexpr std::uint32_t kMinCarrierHz = 500000;
 constexpr std::uint32_t kMaxCarrierHz = 2000000;
@@ -16,11 +16,11 @@ constexpr std::uint8_t kMaxDutyPercent = 60;
 constexpr std::uint32_t kTicksPerMicrosecond = 10;
 constexpr std::uint32_t kMaxRmtPhaseTicks = 32767;
 
-// PrecIR prior art nibble total symbol durations in microseconds (0x0..0xF)
+// PrecIR prior art post-burst gaps in microseconds (0x0..0xF)
 // Source: PrecIR commit b09951e2b3d2741e4ca08f929eafef849f6fc006
 // (hardware/esl_blaster/FW02/Src/main.c; RE page https://www.furrtek.org/index.php?a=esl)
 // GPL-3.0 license.
-inline constexpr std::array<std::uint32_t, 16> kPrecirNibbleTotalDurationsUs{
+inline constexpr std::array<std::uint32_t, 16> kPrecirNibbleGapsUs{
     27, 51, 35, 43, 147, 123, 139, 131, 83, 59, 75, 67, 91, 115, 99, 107};
 constexpr std::uint32_t kPrecirBurstUs = 21;
 constexpr std::uint32_t kPrecirCarrierHz = 1250000;
@@ -59,7 +59,7 @@ struct TimingProfile {
     std::uint32_t carrier_frequency_hz{kPrecirCarrierHz};
     std::uint8_t duty_percent{50};
     std::uint32_t symbol_burst_us{kPrecirBurstUs};
-    std::array<std::uint32_t, 16> nibble_durations_us{kPrecirNibbleTotalDurationsUs};
+    std::array<std::uint32_t, 16> nibble_gaps_us{kPrecirNibbleGapsUs};
     std::uint32_t preamble_burst_us{0};
     std::uint32_t preamble_gap_us{0};
     std::uint32_t trailer_burst_us{0};
@@ -77,7 +77,7 @@ struct TimingProfile {
             return false;
         }
         for (std::size_t i = 0; i < 16; ++i) {
-            if (nibble_durations_us[i] <= symbol_burst_us || nibble_durations_us[i] > 5000) {
+            if (nibble_gaps_us[i] == 0 || nibble_gaps_us[i] > 5000) {
                 return false;
             }
         }
@@ -92,7 +92,7 @@ struct TimingProfile {
 
     constexpr std::uint32_t symbol_gap_us(std::uint8_t nibble) const {
         const std::uint8_t n = nibble & 0x0F;
-        return nibble_durations_us[n] - symbol_burst_us;
+        return nibble_gaps_us[n];
     }
 
     constexpr Pp16Symbol symbol_timing(std::uint8_t nibble) const {
