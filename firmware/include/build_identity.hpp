@@ -27,7 +27,7 @@
 #endif
 
 #ifndef BUILD_PP16_PROFILE_REVISION
-#define BUILD_PP16_PROFILE_REVISION "T006B-r1"
+#define BUILD_PP16_PROFILE_REVISION "T008B-r1"
 #endif
 
 namespace eslbridge::config {

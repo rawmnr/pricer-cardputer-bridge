@@ -49,7 +49,7 @@ Extended HELLO payloads may append a 17-byte build identity suffix (total 29 byt
 | 12 | 1 | identity_version | `0x01` for the build identity layout |
 | 13 | 7 | git_sha | ASCII Git short SHA, or `unknown` when unavailable |
 | 20 | 1 | build_provenance | `0` unknown, `1` clean local, `2` dirty local, `3` CI |
-| 21 | 8 | pp16_profile_revision | ASCII waveform profile identifier, currently `T006B-r1` |
+| 21 | 8 | pp16_profile_revision | ASCII waveform/vector profile identifier, currently `T008B-r1` |
 
 Hosts must continue accepting the original 12-byte HELLO payload. New hosts parse
 the suffix when present and display the exact firmware identity.
@@ -190,6 +190,34 @@ The Python host library provides a clean-room PrecIR adapter module (`eslbridge.
 4. **Provenance & Licensing**:
    - Derived from published PrecIR prior art commit `b09951e2b3d2741e4ca08f929eafef849f6fc006` (`tools_python/pr.py`, GPL-3.0).
    - Clean-room implementation: no PrecIR source code was copied or vendored into this repository.
+
+### Pricer application frame construction
+
+The clean-room host adapter derives the target PLID from barcode
+`N4163114582613272` using the pinned PrecIR field formula:
+
+- internal PLID bytes: `3F B7 B3 02`;
+- wire PLID bytes: `02 B3 B7 3F`.
+
+The wire order is used in every finalized frame after the PP16 header and
+protocol byte. `make_raw_frame()` builds a raw command as:
+
+```text
+85 [02 B3 B7 3F] [COMMAND] [BODY] [CRC16 little-endian]
+```
+
+`make_mcu_frame()` builds graphic image commands as:
+
+```text
+85 [02 B3 B7 3F] 34 00 00 00 [COMMAND] [BODY] [CRC16 little-endian]
+```
+
+The wake command `0x17` uses the raw form. Parameter `0x05`, data `0x20`,
+and refresh `0x01` use the MCU form. The retained 8 × 8 parameter body
+encodes length `0x0010`, unused `0`, raw compression `0`, page `1`, width
+`8`, and height `8`. The application identity profile for these corrected
+vectors is `T008B-r1`.
+
 ### Physical Validation Limitations
 
 > **PROVISIONAL / INFERRED WARNING:**

@@ -21,6 +21,7 @@ Provenance & Citation:
 from __future__ import annotations
 
 import struct
+from dataclasses import dataclass
 from typing import Final
 
 from .models import (
@@ -55,6 +56,76 @@ CRC16_INITIAL: Final[int] = 0x8408
 
 class PrecIRAdapterError(ValueError):
     """Raised when PrecIR frame parameters or lengths fail validation."""
+
+
+@dataclass(frozen=True, slots=True)
+class PricerPlid:
+    """PrecIR PLID bytes in internal and on-the-wire order."""
+
+    internal: bytes
+    wire: bytes
+
+    def __post_init__(self) -> None:
+        if len(self.internal) != 4 or len(self.wire) != 4:
+            raise ValueError("Pricer PLID values must contain exactly four bytes")
+        if self.wire != self.internal[::-1]:
+            raise ValueError("Pricer PLID wire bytes must reverse internal bytes")
+
+
+def derive_pricer_plid(barcode: str) -> PricerPlid:
+    """Derive PrecIR's internal and wire PLID bytes from a Pricer barcode."""
+    if not isinstance(barcode, str):
+        raise PrecIRAdapterError(f"barcode must be str, got {type(barcode).__name__}")
+    if len(barcode) < 12 or not barcode[2:12].isdigit():
+        raise PrecIRAdapterError("barcode must contain decimal PLID fields at positions 2..11")
+
+    id_value = int(barcode[2:7]) + (int(barcode[7:12]) << 16)
+    internal = bytes(
+        (
+            (id_value >> 8) & 0xFF,
+            id_value & 0xFF,
+            (id_value >> 24) & 0xFF,
+            (id_value >> 16) & 0xFF,
+        )
+    )
+    return PricerPlid(internal=internal, wire=internal[::-1])
+
+
+def _make_pricer_frame(
+    plid: PricerPlid,
+    command: int,
+    body: bytes | bytearray,
+    *,
+    mcu: bool,
+) -> bytes:
+    if not isinstance(plid, PricerPlid):
+        raise PrecIRAdapterError(f"plid must be PricerPlid, got {type(plid).__name__}")
+    if not isinstance(command, int) or not 0 <= command <= 0xFF:
+        raise PrecIRAdapterError(f"command must be uint8, got {command}")
+    if not isinstance(body, (bytes, bytearray)):
+        raise PrecIRAdapterError(f"body must be bytes or bytearray, got {type(body).__name__}")
+
+    envelope = b"\x34\x00\x00\x00" if mcu else b""
+    payload = b"\x85" + plid.wire + envelope + bytes((command,)) + bytes(body)
+    return finalize_precir_frame(payload, modulation=MODULATION_PP16)
+
+
+def make_raw_frame(
+    plid: PricerPlid,
+    command: int,
+    body: bytes | bytearray = b"",
+) -> bytes:
+    """Build and finalize a raw Pricer frame without an MCU envelope."""
+    return _make_pricer_frame(plid, command, body, mcu=False)
+
+
+def make_mcu_frame(
+    plid: PricerPlid,
+    command: int,
+    body: bytes | bytearray = b"",
+) -> bytes:
+    """Build and finalize a Pricer graphic MCU frame."""
+    return _make_pricer_frame(plid, command, body, mcu=True)
 
 
 def calculate_precir_crc16(data: bytes | bytearray) -> int:

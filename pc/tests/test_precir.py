@@ -19,9 +19,13 @@ from eslbridge.precir import (
     PRECIR_UPSTREAM_COMMIT,
     PRECIR_UPSTREAM_FILE,
     PrecIRAdapterError,
+    PricerPlid,
     build_pricer_frame_request,
     calculate_precir_crc16,
+    derive_pricer_plid,
     finalize_precir_frame,
+    make_mcu_frame,
+    make_raw_frame,
 )
 
 
@@ -146,3 +150,114 @@ def test_request_builder_bounds_validation() -> None:
         PrecIRAdapterError, match=f"inter_repeat_gap_us {MAX_INTER_REPEAT_GAP_US + 1}"
     ):
         build_pricer_frame_request(valid_frame, inter_repeat_gap_us=MAX_INTER_REPEAT_GAP_US + 1)
+
+
+TARGET_BARCODE = "N4163114582613272"
+TARGET_PLID = PricerPlid(internal=b"\x3f\xb7\xb3\x02", wire=b"\x02\xb3\xb7\x3f")
+
+CORRECTED_VECTORS = {
+    "wake.bin": "000000408502b3b73f170100000001010101010101010101010101010101010101010101f1c3",
+    "params-8x8-color.bin": (
+        "000000408502b3b73f340000000500100000010008000800000000000088000000000000c847"
+    ),
+    "data-8x8-color.bin": "000000408502b3b73f34000000200000f00ff00ff00ff00ff00ff00ff00ff00f9c4d",
+    "refresh.bin": "000000408502b3b73f3400000001000000000000000000000000000000000000000000008c01",
+}
+
+
+def test_target_barcode_maps_to_precir_internal_and_wire_plid() -> None:
+    assert derive_pricer_plid(TARGET_BARCODE) == TARGET_PLID
+
+
+def test_precir_plid_and_frame_builder_validation() -> None:
+    with pytest.raises(PrecIRAdapterError, match="decimal PLID fields"):
+        derive_pricer_plid("N-invalid")
+    with pytest.raises(PrecIRAdapterError, match="plid must be PricerPlid"):
+        make_raw_frame(b"\x00" * 4, 0x17)  # type: ignore[arg-type]
+    with pytest.raises(PrecIRAdapterError, match="command must be uint8"):
+        make_raw_frame(TARGET_PLID, 0x100)
+    with pytest.raises(PrecIRAdapterError, match="body must be bytes"):
+        make_mcu_frame(TARGET_PLID, 0x05, "invalid")  # type: ignore[arg-type]
+
+
+def test_precir_raw_and_mcu_builders_match_independent_golden_frames() -> None:
+    assert (
+        make_raw_frame(TARGET_PLID, 0x17, bytes.fromhex("01000000" + "01" * 22)).hex()
+        == CORRECTED_VECTORS["wake.bin"]
+    )
+    assert (
+        make_mcu_frame(
+            TARGET_PLID,
+            0x05,
+            bytes.fromhex("00100000010008000800000000000088000000000000"),
+        ).hex()
+        == CORRECTED_VECTORS["params-8x8-color.bin"]
+    )
+    assert (
+        make_mcu_frame(
+            TARGET_PLID,
+            0x20,
+            bytes.fromhex("0000f00ff00ff00ff00ff00ff00ff00ff00f"),
+        ).hex()
+        == CORRECTED_VECTORS["data-8x8-color.bin"]
+    )
+    assert make_mcu_frame(TARGET_PLID, 0x01, b"\x00" * 22).hex() == CORRECTED_VECTORS["refresh.bin"]
+
+
+def test_corrected_vectors_match_manifest_binaries_crc_and_frame_shape() -> None:
+    import json
+    from pathlib import Path
+
+    root = Path(__file__).parents[2]
+    manifest = json.loads((root / "tests" / "vectors" / "manifest.json").read_text())
+    entries = {entry["name"]: entry for entry in manifest["vectors"]}
+
+    assert manifest["target"]["barcode"] == TARGET_BARCODE
+    assert manifest["target"]["plid_formula_result"] == "02b3b73f"
+    assert manifest["target"]["raw_frame_plid_order"] == "02b3b73f"
+    for name, expected_hex in CORRECTED_VECTORS.items():
+        entry = entries[name]
+        frame = bytes.fromhex(expected_hex)
+        assert (root / "tests" / "vectors" / name).read_bytes() == frame
+        assert entry["finalized_hex"] == expected_hex
+        assert frame[-2:].hex() == entry["crc16_le_hex"]
+        assert frame[5:9] == TARGET_PLID.wire
+        if name == "wake.bin":
+            assert b"\x34\x00\x00\x00" not in frame[4:-2]
+        else:
+            assert frame[9:13] == b"\x34\x00\x00\x00"
+            assert frame[13] == int(entry["command"], 16)
+
+
+def test_corrected_parameter_vector_has_raw_page_one_fields() -> None:
+    frame = bytes.fromhex(CORRECTED_VECTORS["params-8x8-color.bin"])
+    command_payload = frame[14:-2]
+    assert command_payload[:2] == b"\x00\x10"
+    assert command_payload[2] == 0
+    assert command_payload[3] == 0
+    assert command_payload[4] == 1
+    assert command_payload[5:7] == b"\x00\x08"
+    assert command_payload[7:9] == b"\x00\x08"
+
+
+def test_embedded_orientation_vectors_match_retained_binaries() -> None:
+    import re
+    from pathlib import Path
+
+    root = Path(__file__).parents[2]
+    source = (root / "firmware" / "src" / "orientation_test.cpp").read_text()
+    symbols = {
+        "wake.bin": "Wake",
+        "params-8x8-color.bin": "Params",
+        "data-8x8-color.bin": "Data",
+        "refresh.bin": "Refresh",
+    }
+    for name, symbol in symbols.items():
+        match = re.search(
+            rf"constexpr std::uint8_t k{symbol}Frame\[\] = \{{(.*?)\n\}};",
+            source,
+            flags=re.DOTALL,
+        )
+        assert match is not None
+        embedded = bytes(int(token, 16) for token in re.findall(r"0x([0-9A-F]{2})", match.group(1)))
+        assert embedded == bytes.fromhex(CORRECTED_VECTORS[name])

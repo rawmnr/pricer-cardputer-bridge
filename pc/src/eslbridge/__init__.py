@@ -23,9 +23,13 @@ from .precir import (
     PRECIR_UPSTREAM_COMMIT,
     PRECIR_UPSTREAM_FILE,
     PrecIRAdapterError,
+    PricerPlid,
     build_pricer_frame_request,
     calculate_precir_crc16,
+    derive_pricer_plid,
     finalize_precir_frame,
+    make_mcu_frame,
+    make_raw_frame,
 )
 
 __version__ = "0.1.0"
@@ -45,13 +49,17 @@ __all__ = [
     "PP16EncoderError",
     "PP16TimingProfile",
     "PrecIRAdapterError",
+    "PricerPlid",
     "SymbolTiming",
     "build_pricer_frame_request",
     "calculate_frame_duration_us",
     "calculate_precir_crc16",
+    "derive_pricer_plid",
     "encode_pp16_rmt_ticks",
     "encode_pp16_symbols",
     "finalize_precir_frame",
+    "make_mcu_frame",
+    "make_raw_frame",
     "precir_pp16_profile",
     "provisional_pp16_profile",
 ]

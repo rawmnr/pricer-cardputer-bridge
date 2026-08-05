@@ -66,7 +66,7 @@ The probe must show:
 - semantic firmware version;
 - `Git SHA`;
 - `Build provenance` (`clean`, `dirty`, `ci`, or `unknown`);
-- `PP16 profile` (currently `T006B-r1`).
+- `PP16 profile` (currently `T008B-r1`).
 
 The Cardputer ready screen shows the same Git SHA, provenance, and PP16 profile.
 The host accepts the legacy 12-byte HELLO response for compatibility, but a

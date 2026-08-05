@@ -66,13 +66,13 @@ def test_hello_decode_extended_build_identity() -> None:
         + bytes([44, 0, 1])
         + b"abc1234"
         + bytes([3])
-        + b"T006B-r1"
+        + b"T008B-r1"
     )
     info = HelloInfo.decode(payload)
     assert info.identity_version == 1
     assert info.git_sha == "abc1234"
     assert info.build_provenance == "ci"
-    assert info.pp16_profile_revision == "T006B-r1"
+    assert info.pp16_profile_revision == "T008B-r1"
     info.validate_identity(port="COM3")
 
 
@@ -84,7 +84,7 @@ def test_hello_extended_identity_requires_version_one() -> None:
         + bytes([44, 0, 0])
         + b"abc1234"
         + bytes([3])
-        + b"T006B-r1"
+        + b"T008B-r1"
     )
     with pytest.raises(ProtocolError, match="build identity version 0"):
         HelloInfo.decode(bytes(payload))
