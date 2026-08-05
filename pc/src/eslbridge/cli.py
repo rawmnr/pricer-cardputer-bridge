@@ -106,7 +106,7 @@ def send_frame(
         int, typer.Option("--modulation", help="Modulation scheme (4 for PP4, 16 for PP16)")
     ] = 16,
     repeats: Annotated[
-        int, typer.Option("--repeats", min=1, max=100, help="Number of frame repetitions")
+        int, typer.Option("--repeats", min=1, max=400, help="Number of frame repetitions")
     ] = 1,
     inter_repeat_gap_us: Annotated[
         int,

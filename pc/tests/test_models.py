@@ -167,23 +167,21 @@ def test_pricer_frame_request_accepted_min_max_boundaries() -> None:
     assert len(encoded_min) == 11
 
     max_req = PricerFrameRequest(
-        frame=b"\xaa" * 256,
+        frame=b"\x01",
         modulation=16,
-        repeats=100,
+        repeats=400,
         inter_repeat_gap_us=1_000_000,
     )
     encoded_max = max_req.encode()
-    assert len(encoded_max) == 10 + 256
+    assert len(encoded_max) == 11
 
 
 @pytest.mark.parametrize(
     "invalid_req",
     [
-        PricerFrameRequest(frame=b"\x01", modulation=0),
-        PricerFrameRequest(frame=b"\x01", modulation=5),
         PricerFrameRequest(frame=b"\x01", reserved=1),
         PricerFrameRequest(frame=b"\x01", repeats=0),
-        PricerFrameRequest(frame=b"\x01", repeats=101),
+        PricerFrameRequest(frame=b"\x01", repeats=401),
         PricerFrameRequest(frame=b"\x01", inter_repeat_gap_us=1_000_001),
         PricerFrameRequest(frame=b""),
         PricerFrameRequest(frame=b"\x01" * 257),

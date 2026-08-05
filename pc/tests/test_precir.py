@@ -131,7 +131,7 @@ def test_request_builder_bounds_validation() -> None:
     with pytest.raises(PrecIRAdapterError, match="frame must be bytes"):
         build_pricer_frame_request(12345)  # type: ignore[arg-type]
 
-    # Repeats < 1 or > 100
+    # Repeats < 1 or > 400
     with pytest.raises(PrecIRAdapterError, match="repeats 0 outside allowed range"):
         build_pricer_frame_request(valid_frame, repeats=0)
 

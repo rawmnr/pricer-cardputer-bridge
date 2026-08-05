@@ -21,7 +21,7 @@ inline constexpr std::uint8_t kModulationPp16 = 16;
 inline constexpr std::size_t kMinPricerFrameBytes = 1;
 inline constexpr std::size_t kMaxPricerFrameBytes = 256;
 inline constexpr std::uint16_t kMinPricerRepeats = 1;
-inline constexpr std::uint16_t kMaxPricerRepeats = 100;
+inline constexpr std::uint16_t kMaxPricerRepeats = 400;
 inline constexpr std::uint32_t kMaxInterRepeatGapUs = 1'000'000;
 
 }  // namespace eslbridge::config

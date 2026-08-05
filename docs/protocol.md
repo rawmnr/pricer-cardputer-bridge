@@ -101,12 +101,12 @@ Request payload format:
 |---|---:|---|---|
 | modulation | 1 | Modulation scheme | `4` for PP4 or `16` for PP16 |
 | reserved | 1 | Reserved byte | Must be zero (`0`) |
-| repeats | 2 | Number of frame repetitions | 1..100 (must be > 0; continuous mode prohibited) |
+| repeats | 2 | Number of frame repetitions | 1..400 (must be > 0; continuous mode prohibited) |
 | inter_repeat_gap_us | 4 | Gap between repetitions | 0..1,000,000 us (max 1 second) |
 | frame_length | 2 | Raw Pricer frame bytes count | 1..256 bytes (must match payload length - 10) |
 | frame | N | Raw Pricer frame bytes | `frame_length` bytes |
 
-The payload length MUST equal `10 + frame_length`. If payload length != `10 + frame_length`, or if `reserved != 0`, `repeats` is not in 1..100, `inter_repeat_gap_us > 1,000,000`, or `frame_length` is not in 1..256, the device returns `INVALID_ARGUMENT` (`0x06`).
+The payload length MUST equal `10 + frame_length`. If payload length != `10 + frame_length`, or if `reserved != 0`, `repeats` is not in 1..400, `inter_repeat_gap_us > 1,000,000`, or `frame_length` is not in 1..256, the device returns `INVALID_ARGUMENT` (`0x06`).
 
 For `modulation = 16` (PP16), transmission is executed through ESP32 RMT using fixed storage (`eslbridge::pp16::encode_frame`) with explicit bounded waits per repeat (`rmt_wait_tx_done`). If transmission wait deadline expires, `TIMEOUT` (`0x0A`) is returned. Continuous RMT loop mode is prohibited.
 
@@ -185,7 +185,7 @@ The Python host library provides a clean-room PrecIR adapter module (`eslbridge.
 
 3. **Repeat Metadata Separation**:
    - Frame finalization (`finalize_precir_frame`) outputs raw Pricer frame bytes (`1..256` bytes).
-   - Transmission metadata (`repeats` count in `1..100` and `inter_repeat_gap_us` in `0..1,000,000`) is passed in the host bridge request envelope (`PricerFrameRequest`) and is **never embedded inside raw frame payload bytes**.
+   - Transmission metadata (`repeats` count in `1..400` and `inter_repeat_gap_us` in `0..1,000,000`) is passed in the host bridge request envelope (`PricerFrameRequest`) and is **never embedded inside raw frame payload bytes**.
 
 4. **Provenance & Licensing**:
    - Derived from published PrecIR prior art commit `b09951e2b3d2741e4ca08f929eafef849f6fc006` (`tools_python/pr.py`, GPL-3.0).

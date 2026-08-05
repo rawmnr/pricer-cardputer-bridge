@@ -101,9 +101,9 @@ void test_valid_pricer_frame_request_boundaries(void) {
     TEST_ASSERT_FALSE(valid_pricer_frame_request(5, 1, 0, 10));
     TEST_ASSERT_FALSE(valid_pricer_frame_request(255, 1, 0, 10));
 
-    // Invalid repeats (0 or > 100)
+    // Invalid repeats (0 or > 400)
     TEST_ASSERT_FALSE(valid_pricer_frame_request(16, 0, 0, 10));
-    TEST_ASSERT_FALSE(valid_pricer_frame_request(16, 101, 0, 10));
+    TEST_ASSERT_FALSE(valid_pricer_frame_request(16, 401, 0, 10));
 
     // Invalid gap (> 1,000,000 us)
     TEST_ASSERT_FALSE(valid_pricer_frame_request(16, 1, 1000001, 10));
