@@ -6,6 +6,7 @@
 #include "bridge_protocol.hpp"
 #include "build_identity.hpp"
 #include "device_ui.hpp"
+#include "orientation_test.hpp"
 #include "ir_transmitter.hpp"
 
 namespace {
@@ -181,7 +182,13 @@ void setup() {
 }
 
 void loop() {
-    ui.update();
+    const auto key_test = ui.update();
+    if (key_test != eslbridge::OrientationTest::kNone) {
+        const auto status = eslbridge::run_orientation_test(transmitter, key_test);
+        device_status.last_command = Command::kSendPricerFrame;
+        device_status.last_error = status;
+        ui.show_orientation_test(key_test, status, transmitter.tx_count());
+    }
 
     const auto now_ms = millis();
     const auto poll_res = parser.poll(now_ms);

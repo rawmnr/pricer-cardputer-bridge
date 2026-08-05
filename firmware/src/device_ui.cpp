@@ -2,6 +2,8 @@
 
 #include <M5Cardputer.h>
 
+#include "orientation_test.hpp"
+
 namespace eslbridge {
 
 void DeviceUi::begin() {
@@ -42,8 +44,35 @@ void DeviceUi::show_command(
                                static_cast<unsigned long>(tx_count));
 }
 
-void DeviceUi::update() {
-    M5Cardputer.update();
+void DeviceUi::show_orientation_test(
+    const OrientationTest test,
+    const protocol::Status status,
+    const std::uint32_t tx_count) {
+    M5Cardputer.Display.fillRect(0, 88, M5Cardputer.Display.width(), 47, TFT_BLACK);
+    M5Cardputer.Display.setCursor(8, 88);
+    M5Cardputer.Display.printf("KEY TEST: %s\n", orientation_test_name(test));
+    M5Cardputer.Display.printf("STATUS: 0x%02X TX:%lu\n",
+                               static_cast<unsigned>(status),
+                               static_cast<unsigned long>(tx_count));
 }
 
+OrientationTest DeviceUi::update() {
+    M5Cardputer.update();
+    if (!M5Cardputer.Keyboard.isChange()) {
+        return OrientationTest::kNone;
+    }
+    if (M5Cardputer.Keyboard.isKeyPressed('1')) {
+        return OrientationTest::kOne;
+    }
+    if (M5Cardputer.Keyboard.isKeyPressed('2')) {
+        return OrientationTest::kTwo;
+    }
+    if (M5Cardputer.Keyboard.isKeyPressed('3')) {
+        return OrientationTest::kThree;
+    }
+    if (M5Cardputer.Keyboard.isKeyPressed('4')) {
+        return OrientationTest::kFour;
+    }
+    return OrientationTest::kNone;
+}
 }  // namespace eslbridge

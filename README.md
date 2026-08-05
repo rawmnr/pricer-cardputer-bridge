@@ -54,6 +54,26 @@ pricer-cardputer-bridge-cardputer-adv-<version-or-sha>.bin
 
 Use the application-only `firmware.bin`. Do not distribute a full flash dump or a merged image containing a bootloader and partition table unless a future task explicitly requires and documents that format.
 
+## Cardputer keyboard orientation tests
+
+The running application includes a local, PC-free minimal ESL test sequence.
+After aligning the built-in IR emitter with the target, press one of the
+number keys:
+
+| Key | Action |
+|---|---|
+| `1` | Send retained wake + 8 × 8 params + data + refresh sequence; label result `TEST-1` |
+| `2` | Same bounded sequence; label result `TEST-2` |
+| `3` | Same bounded sequence; label result `TEST-3` |
+| `4` | Same bounded sequence; label result `TEST-4` |
+
+Use one key per physical placement/orientation. Each sequence sends one
+400-repeat wake operation with a 2 ms inter-repeat gap, followed by the three
+single-frame vectors committed under `tests/vectors/`. Key tests are finite and
+do not enable continuous carrier output. Local acceptance still does not prove
+IR emission or ESL compatibility; record distance, alignment, ambient light,
+and visible display response in a bench record.
+
 ## Why this split
 
 The Windows application owns the fast-changing and testable logic: image conversion, addressing, compression, CRCs, Pricer command assembly, logging, and later Home Assistant integration. The Cardputer firmware stays small and deterministic: receive a bounded command, generate a precisely timed waveform, return structured status.
