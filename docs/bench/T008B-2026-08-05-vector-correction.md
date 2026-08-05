@@ -32,13 +32,24 @@ files, and verify the embedded firmware arrays.
 | `data-8x8-color.bin` | `0x20` MCU | 34 bytes | `9c4d` |
 | `refresh.bin` | `0x01` MCU | 38 bytes | `8c01` |
 
-## Physical-test status
+## Physical retest
 
-The prior T009/T009A runs exercised stale framing and cannot establish PLID
-addressing, MCU-command acceptance, or ESL compatibility. They remain historical
-records of local transport behavior only. No corrected artifact has been installed
-and no corrected physical ESL update is claimed by this record.
+After the corrected application-only binary was copied to the SD card and
+installed through M5Launcher, the operator verified the expected firmware
+identity and COM port. The selected artifact was:
 
-A physical retest remains blocked until the corrected application-only binary is
-built, its `T008B-r1` identity is verified through M5Launcher, and one controlled
-PC-free sequence is recorded.
+- filename: `pricer-cardputer-bridge-cardputer-adv-f9af26e.bin`
+- size: `475920` bytes
+- SHA-256: `761AD58C6916468D1263DEC8574ED31C972BB7C08B3F6601A0ACB1D43A9C4F0E`
+- Git SHA: `f9af26e`
+- profile: `T008B-r1`
+
+The operator positioned the emitter near the target ESL and pressed keyboard
+key `1` once, triggering the finite corrected wake + params + data + refresh
+sequence. The bridge reported the expected local operation, but the ESL showed
+no visible display change.
+
+This negative result does not establish carrier frequency, optical power, or
+ESL protocol incompatibility. The next discriminator remains T005 electrical
+and optical carrier measurement. Do not repeat distance/orientation trials
+before that measurement.
