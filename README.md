@@ -63,15 +63,16 @@ number keys:
 | Key | Action |
 |---|---|
 | `1` | `PRECIR_CONTROL`: retained T008C wake `0x17`, page 1, partial 8 × 8 image |
-| `2` | `PRICEHAX_EXACT`: type-1327 wake `0x97`, page 2, full-screen 208 × 112 image |
-| `3` | `PRICEHAX_WAKE17`: key 2 with the retained PrecIR wake command/body |
+| `2` | `PRICEHAX_EXACT`: upstream-exact compressed type-1327 profile, wake `0x97`, page 2 |
+| `3` | `PRICEHAX_RAW`: uncompressed full-screen 208 × 112 diagnostic profile |
 | `4` | `PRICEHAX_PAGE1`: key 2 with page 1 |
 
 The Pricehax plans split the 500-repeat wake into two bounded 250-repeat
 transmissions separated by the same 2 ms repeat gap. Parameters repeat 10
-times, the 40-byte data frame repeats 3 times, and refresh repeats 50 times.
-The deterministic full-screen all-white two-plane image compresses from 5,824
-raw bytes to 4 encoded bytes and one zero-padded 40-byte packet.
+times, each 40-byte data frame repeats 3 times, and refresh repeats 50 times.
+The compressed profile reproduces the pinned upstream terminal-run behavior,
+announces its padded 40-byte group, and sends one packet. The raw profile
+announces 5,824 bytes and pads transport to 5,840 bytes across 146 packets.
 All four tests remain finite and do not enable continuous carrier output.
 Local completion does not prove IR emission or ESL compatibility; record the
 selected profile, distance, alignment, ambient light, and visible response.

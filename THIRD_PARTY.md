@@ -52,7 +52,7 @@ Before adapting PrecIR code:
 - Pinned source commit: `3043f964595f90fdb6835640275751277523f809`
 - Source files inspected: `app/src/app/src/main/java/org/furrtek/pricehaxbt/MainActivity.java`, `PPM.java`, `CRCCalc.java`, and `dongle/v3.2.0/PricehaxBT_IRDongle_prog/PricehaxBT_IRDongle_prog.ino`
 - Adaptation: clean-room profile helpers in `pc/src/eslbridge/pricehax.py` and deterministic vector generation in `scripts/generate_vectors.py` reproduce the published type-1327 dimensions, application frame bodies, binary run-length encoding, 40-byte packetization, PP16 header handling, and repeat metadata. No PricehaxBT source was copied or vendored.
-- Change note: added 2026-08-05 for `T008D-r1`; all vectors remain unverified against the physical target ESL, and no compatibility claim is made.
+- Change note: updated 2026-08-05 for `T008E-r1` to reproduce the published terminal-run control flow, announce the padded compressed length, and add an uncompressed full-screen diagnostic profile. All vectors remain unverified against the physical target ESL; no compatibility claim is made.
 
 ## M5Cardputer library
 

@@ -26,12 +26,14 @@ from eslbridge.pricehax import (
     PRICEHAX_TYPE_CODE,
     PRICEHAX_UPSTREAM_COMMIT,
     PRICEHAX_WIDTH,
+    EncodedImage,
     make_all_white_type_1327_image,
+    make_all_white_type_1327_raw_image,
     make_pricehax_data_bodies,
 )
 
 BARCODE = "N4163114582613272"
-PROFILE_REVISION = "T008D-r1"
+PROFILE_REVISION = "T008E-r1"
 VECTOR_DIR = ROOT / "tests" / "vectors"
 ORIENTATION_SOURCE = ROOT / "firmware" / "src" / "orientation_test.cpp"
 RAW_IMAGE_PAYLOAD = bytes.fromhex("f00ff00ff00ff00ff00ff00ff00ff00f")
@@ -107,7 +109,7 @@ def make_precir_vectors(plid: PricerPlid) -> list[Vector]:
 
 
 def make_vectors() -> tuple[PricerPlid, dict[str, bytes], dict[str, bytes]]:
-    """Return the retained T008C control vectors under their historical names."""
+    """Return the retained T008C control vectors under historical names."""
     plid = derive_pricer_plid(BARCODE)
     vectors = make_precir_vectors(plid)
     historical_names = (
@@ -128,29 +130,33 @@ def make_vectors() -> tuple[PricerPlid, dict[str, bytes], dict[str, bytes]]:
 
 
 def make_pricehax_vectors(
-    plid: PricerPlid, *, page: int = 2, wake_command: int = 0x97
+    plid: PricerPlid,
+    *,
+    page: int = 2,
+    raw: bool = False,
 ) -> list[Vector]:
-    encoded = make_all_white_type_1327_image()
+    encoded = (
+        make_all_white_type_1327_raw_image()
+        if raw
+        else make_all_white_type_1327_image()
+    )
     packets = make_pricehax_data_bodies(encoded)
-    assert len(encoded.payload) <= 0xFFFF
+    assert encoded.announced_length <= 0xFFFF
+    profile_name = "pricehax-raw" if raw else "pricehax"
     params_body = (
-        len(encoded.payload).to_bytes(2, "big")
+        encoded.announced_length.to_bytes(2, "big")
         + bytes((0, encoded.compression_type, page))
         + PRICEHAX_WIDTH.to_bytes(2, "big")
         + PRICEHAX_HEIGHT.to_bytes(2, "big")
         + bytes.fromhex("00000000000088000000000000")
     )
-    wake_body = (
-        bytes.fromhex("01000000" + "01" * 22)
-        if wake_command == 0x17
-        else bytes.fromhex("01000000" + "01" * 20)
-    )
+    wake_body = bytes.fromhex("01000000" + "01" * 20)
     definitions: list[tuple[str, int, bytes, int, bool]] = [
-        (f"pricehax-wake-{wake_command:02x}.bin", wake_command, wake_body, 500, False),
-        (f"pricehax-params-page{page}.bin", 0x05, params_body, 10, True),
+        ("pricehax-wake-97.bin", 0x97, wake_body, 500, False),
+        (f"{profile_name}-params-page{page}.bin", 0x05, params_body, 10, True),
     ]
     definitions.extend(
-        (f"pricehax-data-{index:04d}.bin", 0x20, body, 3, True)
+        (f"{profile_name}-data-{index:04d}.bin", 0x20, body, 3, True)
         for index, body in enumerate(packets)
     )
     definitions.append(("pricehax-refresh.bin", 0x01, b"\x00" * 18, 50, True))
@@ -182,10 +188,32 @@ def vector_manifest(vector: Vector) -> dict[str, object]:
     }
 
 
+def image_manifest(description: str, encoded: EncodedImage) -> dict[str, object]:
+    return {
+        "description": description,
+        "width": PRICEHAX_WIDTH,
+        "height": PRICEHAX_HEIGHT,
+        "raw_bit_count": PRICEHAX_RAW_BITS,
+        "raw_byte_count": PRICEHAX_RAW_BYTES,
+        "encoded_unpadded_length": len(encoded.payload),
+        "encoded_padded_length": len(encoded.padded_payload),
+        "announced_length": encoded.announced_length,
+        "frame_count": len(encoded.padded_payload) // PRICEHAX_BYTES_PER_FRAME,
+    }
+
+
 def write_manifest(
-    plid: PricerPlid, precir: list[Vector], pricehax: list[Vector]
+    plid: PricerPlid,
+    precir: list[Vector],
+    compressed: list[Vector],
+    raw: list[Vector],
 ) -> None:
-    encoded = make_all_white_type_1327_image()
+    historical_names = (
+        "wake.bin",
+        "params-8x8-color.bin",
+        "data-8x8-color.bin",
+        "refresh.bin",
+    )
     manifest = {
         "target": {
             "marking": "#19523-01",
@@ -198,42 +226,26 @@ def write_manifest(
             "modulation": 16,
         },
         "profile_revision": PROFILE_REVISION,
-        "transmission": {
-            "wake_repeats": 400,
-            "wake_repeat_gap_us": 2_000,
-            "image_repeats": 1,
-            "image_repeat_gap_us": 0,
-        },
         "vectors": [
-            {
-                **vector_manifest(vector),
-                "name": historical_name,
-            }
-            for historical_name, vector in zip(
-                (
-                    "wake.bin",
-                    "params-8x8-color.bin",
-                    "data-8x8-color.bin",
-                    "refresh.bin",
-                ),
-                precir,
-                strict=True,
-            )
+            {**vector_manifest(vector), "name": historical_name}
+            for historical_name, vector in zip(historical_names, precir, strict=True)
         ],
         "precir_control": {"vectors": [vector_manifest(vector) for vector in precir]},
         "pricehax_1327": {
             "upstream_commit": PRICEHAX_UPSTREAM_COMMIT,
-            "image": {
-                "description": "full-screen all-white, two planes",
-                "width": PRICEHAX_WIDTH,
-                "height": PRICEHAX_HEIGHT,
-                "raw_bit_count": PRICEHAX_RAW_BITS,
-                "raw_byte_count": PRICEHAX_RAW_BYTES,
-                "encoded_unpadded_length": len(encoded.payload),
-                "encoded_padded_length": len(encoded.padded_payload),
-                "frame_count": len(encoded.padded_payload) // PRICEHAX_BYTES_PER_FRAME,
-            },
-            "vectors": [vector_manifest(vector) for vector in pricehax],
+            "image": image_manifest(
+                "full-screen all-white, upstream-exact compressed two planes",
+                make_all_white_type_1327_image(),
+            ),
+            "vectors": [vector_manifest(vector) for vector in compressed],
+        },
+        "pricehax_1327_raw": {
+            "upstream_commit": PRICEHAX_UPSTREAM_COMMIT,
+            "image": image_manifest(
+                "full-screen all-white, raw two planes",
+                make_all_white_type_1327_raw_image(),
+            ),
+            "vectors": [vector_manifest(vector) for vector in raw],
         },
     }
     (VECTOR_DIR / "manifest.json").write_text(
@@ -245,64 +257,127 @@ def array_definition(symbol: str, frame: bytes) -> str:
     return f"constexpr std::uint8_t {symbol}[] = {{\n{cpp_bytes(frame)}\n}};"
 
 
+def frame_entry(
+    symbol: str,
+    vector: Vector,
+    *,
+    repeats: int | None = None,
+    pre_gap_us: int = 0,
+) -> str:
+    repeat_count = vector.repeats if repeats is None else repeats
+    return (
+        f"    {{{symbol}, sizeof({symbol}), {repeat_count}, "
+        f"{vector.inter_repeat_gap_us}, {pre_gap_us}}},"
+    )
+
+
+def plan_definition(
+    symbol: str,
+    vectors: list[Vector],
+    frame_symbols: list[str],
+) -> str:
+    entries = [
+        frame_entry(frame_symbols[0], vectors[0], repeats=250),
+        frame_entry(frame_symbols[0], vectors[0], repeats=250, pre_gap_us=2_000),
+    ]
+    entries.extend(
+        frame_entry(frame_symbol, vector)
+        for frame_symbol, vector in zip(frame_symbols[1:], vectors[1:], strict=True)
+    )
+    entries_source = "\n".join(entries)
+    return f"""constexpr OrientationTestFrame {symbol}Frames[] = {{
+{entries_source}
+}};
+constexpr OrientationTestPlan {symbol}Plan = {{
+    {symbol}Frames,
+    sizeof({symbol}Frames) / sizeof({symbol}Frames[0]),
+}};"""
+
+
 def write_orientation_source(
-    precir: list[Vector], exact: list[Vector], wake17: list[Vector], page1: list[Vector]
+    precir: list[Vector],
+    compressed: list[Vector],
+    raw: list[Vector],
+    page1: list[Vector],
 ) -> None:
-    arrays = {
+    arrays: dict[str, bytes] = {
         "kPrecirWakeFrame": precir[0].frame,
         "kPrecirParamsFrame": precir[1].frame,
         "kPrecirDataFrame": precir[2].frame,
         "kPrecirRefreshFrame": precir[3].frame,
-        "kPricehaxWake97Frame": exact[0].frame,
-        "kPricehaxWake17Frame": wake17[0].frame,
-        "kPricehaxParamsPage2Frame": exact[1].frame,
+        "kPricehaxWake97Frame": compressed[0].frame,
+        "kPricehaxParamsPage2Frame": compressed[1].frame,
+        "kPricehaxDataFrame": compressed[2].frame,
+        "kPricehaxRefreshFrame": compressed[-1].frame,
         "kPricehaxParamsPage1Frame": page1[1].frame,
-        "kPricehaxDataFrame": exact[2].frame,
-        "kPricehaxRefreshFrame": exact[-1].frame,
+        "kPricehaxRawParamsFrame": raw[1].frame,
     }
+    raw_data_symbols = []
+    for index, vector in enumerate(raw[2:-1]):
+        symbol = f"kPricehaxRawData{index:04d}Frame"
+        arrays[symbol] = vector.frame
+        raw_data_symbols.append(symbol)
+
     array_source = "\n\n".join(
         array_definition(symbol, frame) for symbol, frame in arrays.items()
     )
+    precir_entries = "\n".join(
+        frame_entry(symbol, vector)
+        for symbol, vector in zip(
+            (
+                "kPrecirWakeFrame",
+                "kPrecirParamsFrame",
+                "kPrecirDataFrame",
+                "kPrecirRefreshFrame",
+            ),
+            precir,
+            strict=True,
+        )
+    )
+    compressed_symbols = [
+        "kPricehaxWake97Frame",
+        "kPricehaxParamsPage2Frame",
+        "kPricehaxDataFrame",
+        "kPricehaxRefreshFrame",
+    ]
+    raw_symbols = [
+        "kPricehaxWake97Frame",
+        "kPricehaxRawParamsFrame",
+        *raw_data_symbols,
+        "kPricehaxRefreshFrame",
+    ]
+    page1_symbols = [
+        "kPricehaxWake97Frame",
+        "kPricehaxParamsPage1Frame",
+        "kPricehaxDataFrame",
+        "kPricehaxRefreshFrame",
+    ]
     source = f"""#include "orientation_test.hpp"
 
 #include <Arduino.h>
 
 #include "ir_transmitter.hpp"
 
-// Generated by scripts/generate_vectors.py; do not edit the frame arrays manually.
+// Generated by scripts/generate_vectors.py; do not edit frame arrays manually.
 namespace eslbridge {{
 namespace {{
 
 {array_source}
 
+constexpr OrientationTestFrame kPrecirControlFrames[] = {{
+{precir_entries}
+}};
 constexpr OrientationTestPlan kPrecirControlPlan = {{
-    std::array<OrientationTestFrame, 5>{{{{
-        {{kPrecirWakeFrame, sizeof(kPrecirWakeFrame), 400, 2'000, 0}},
-        {{kPrecirParamsFrame, sizeof(kPrecirParamsFrame), 1, 0, 0}},
-        {{kPrecirDataFrame, sizeof(kPrecirDataFrame), 1, 0, 0}},
-        {{kPrecirRefreshFrame, sizeof(kPrecirRefreshFrame), 1, 0, 0}},
-        {{}},
-    }}}},
-    4,
+    kPrecirControlFrames,
+    sizeof(kPrecirControlFrames) / sizeof(kPrecirControlFrames[0]),
 }};
 
-#define PRICEHAX_PLAN(name, wake, params) \\
-constexpr OrientationTestPlan name = {{ \\
-    std::array<OrientationTestFrame, 5>{{{{ \\
-        {{wake, sizeof(wake), 250, 2'000, 0}}, \\
-        {{wake, sizeof(wake), 250, 2'000, 2'000}}, \\
-        {{params, sizeof(params), 10, 2'000, 0}}, \\
-        {{kPricehaxDataFrame, sizeof(kPricehaxDataFrame), 3, 2'000, 0}}, \\
-        {{kPricehaxRefreshFrame, sizeof(kPricehaxRefreshFrame), 50, 2'000, 0}}, \\
-    }}}}, \\
-    5, \\
-}}
+{plan_definition("kPricehaxExact", compressed, compressed_symbols)}
 
-PRICEHAX_PLAN(kPricehaxExactPlan, kPricehaxWake97Frame, kPricehaxParamsPage2Frame);
-PRICEHAX_PLAN(kPricehaxWake17Plan, kPricehaxWake17Frame, kPricehaxParamsPage2Frame);
-PRICEHAX_PLAN(kPricehaxPage1Plan, kPricehaxWake97Frame, kPricehaxParamsPage1Frame);
+{plan_definition("kPricehaxRaw", raw, raw_symbols)}
 
-#undef PRICEHAX_PLAN
+{plan_definition("kPricehaxPage1", page1, page1_symbols)}
+
 }}  // namespace
 
 const OrientationTestPlan& orientation_test_plan(const OrientationTest test) {{
@@ -312,7 +387,7 @@ const OrientationTestPlan& orientation_test_plan(const OrientationTest test) {{
         case OrientationTest::kTwo:
             return kPricehaxExactPlan;
         case OrientationTest::kThree:
-            return kPricehaxWake17Plan;
+            return kPricehaxRawPlan;
         case OrientationTest::kFour:
             return kPricehaxPage1Plan;
         default:
@@ -327,7 +402,7 @@ const char* orientation_test_name(const OrientationTest test) {{
         case OrientationTest::kTwo:
             return "PRICEHAX_EXACT";
         case OrientationTest::kThree:
-            return "PRICEHAX_WAKE17";
+            return "PRICEHAX_RAW";
         case OrientationTest::kFour:
             return "PRICEHAX_PAGE1";
         default:
@@ -335,7 +410,9 @@ const char* orientation_test_name(const OrientationTest test) {{
     }}
 }}
 
-protocol::Status run_orientation_test(IrTransmitter& transmitter, const OrientationTest test) {{
+protocol::Status run_orientation_test(
+    IrTransmitter& transmitter,
+    const OrientationTest test) {{
     if (test == OrientationTest::kNone) {{
         return protocol::Status::kInvalidArgument;
     }}
@@ -363,8 +440,8 @@ def main() -> None:
     plid = derive_pricer_plid(BARCODE)
     assert plid == PricerPlid(internal=b"\x3f\xb7\xb3\x02", wire=b"\x02\xb3\xb7\x3f")
     precir = make_precir_vectors(plid)
-    exact = make_pricehax_vectors(plid)
-    wake17 = make_pricehax_vectors(plid, wake_command=0x17)
+    compressed = make_pricehax_vectors(plid)
+    raw = make_pricehax_vectors(plid, raw=True)
     page1 = make_pricehax_vectors(plid, page=1)
 
     VECTOR_DIR.mkdir(parents=True, exist_ok=True)
@@ -373,13 +450,13 @@ def main() -> None:
         **historical_frames,
         **{
             vector.name: vector.frame
-            for vector in (*precir, *exact, *wake17[0:1], *page1[1:2])
+            for vector in (*precir, *compressed, *raw, *page1[1:2])
         },
     }
     for name, frame in retained.items():
         (VECTOR_DIR / name).write_bytes(frame)
-    write_manifest(plid, precir, exact)
-    write_orientation_source(precir, exact, wake17, page1)
+    write_manifest(plid, precir, compressed, raw)
+    write_orientation_source(precir, compressed, raw, page1)
 
 
 if __name__ == "__main__":

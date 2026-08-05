@@ -49,7 +49,7 @@ Extended HELLO payloads may append a 17-byte build identity suffix (total 29 byt
 | 12 | 1 | identity_version | `0x01` for the build identity layout |
 | 13 | 7 | git_sha | ASCII Git short SHA, or `unknown` when unavailable |
 | 20 | 1 | build_provenance | `0` unknown, `1` clean local, `2` dirty local, `3` CI |
-| 21 | 8 | pp16_profile_revision | ASCII waveform/vector profile identifier, currently `T008D-r1` |
+| 21 | 8 | pp16_profile_revision | ASCII waveform/vector profile identifier, currently `T008E-r1` |
 
 Hosts must continue accepting the original 12-byte HELLO payload. New hosts parse
 the suffix when present and display the exact firmware identity.
@@ -215,16 +215,18 @@ protocol byte. `make_raw_frame()` builds a raw command as:
 The retained PrecIR control uses wake command `0x17`, a partial 8 × 8 image,
 page 1, and 20-byte packets. Its vectors remain unchanged from `T008C-r1`.
 
-The `T008D-r1` application identity adds a separate PricehaxBT type-1327
-profile derived from pinned commit
+The `T008E-r1` application identity provides a PricehaxBT type-1327 profile
+derived from pinned commit
 `3043f964595f90fdb6835640275751277523f809`: wake command `0x97` with 20
 filler bytes and 500 total repetitions; full-screen 208 × 112 two-plane image;
 page 2; 40-byte indexed data packets; 10 parameter repetitions; 3 data
-repetitions; and 50 refresh repetitions with an 18-byte body. The deterministic
-all-white image contains 46,592 raw bits (5,824 bytes), encodes to 4 bytes, and
-is zero-padded to one 40-byte packet. Keyboard variants independently substitute
-the retained `0x17` wake or page 1. These application profiles do not change the
-provisional PP16 physical timing.
+repetitions; and 50 refresh repetitions with an 18-byte body. Compressed mode
+reproduces the upstream terminal-run behavior (`80 00 B5 FF`) and announces
+the padded group length of 40 bytes. The raw diagnostic mode announces 5,824
+bytes and pads transport to 5,840 bytes in 146 packets. A page-1 variant
+isolates page selection. These application profiles do not change the
+provisional PP16 physical timing. Negative `T008D-r1` physical results are
+invalid because that revision announced 4 compressed bytes while sending 40.
 
 ### Physical Validation Limitations
 

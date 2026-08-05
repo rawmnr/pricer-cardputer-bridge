@@ -27,11 +27,21 @@ class PricehaxProfileError(ValueError):
 
 @dataclass(frozen=True, slots=True)
 class EncodedImage:
-    """Unpadded Pricehax payload plus its 40-byte packet representation."""
+    """Pricehax image bytes and their transport metadata."""
 
     payload: bytes
     padded_payload: bytes
+    announced_length: int
     compression_type: int
+
+
+def _validate_raw_bits(raw_bits: Sequence[int]) -> None:
+    if len(raw_bits) != PRICEHAX_RAW_BITS:
+        raise PricehaxProfileError(
+            f"raw image must contain {PRICEHAX_RAW_BITS} bits, got {len(raw_bits)}"
+        )
+    if any(bit not in (0, 1) for bit in raw_bits):
+        raise PricehaxProfileError("raw image bits must contain only 0 or 1")
 
 
 def _pack_bits(bits: Sequence[int]) -> bytes:
@@ -43,52 +53,77 @@ def _pack_bits(bits: Sequence[int]) -> bytes:
     return bytes(output)
 
 
-def encode_pricehax_rle(raw_bits: Sequence[int]) -> EncodedImage:
-    """Encode two image planes with PricehaxBT's binary Elias-gamma RLE.
-
-    The first bit stores the initial color. Each run length follows as an
-    Elias-gamma integer. The encoded bytes are then zero-padded to complete
-    40-byte data packets; the returned ``payload`` remains unpadded for the
-    parameter-frame length field.
-    """
-    if len(raw_bits) != PRICEHAX_RAW_BITS:
-        raise PricehaxProfileError(
-            f"raw image must contain {PRICEHAX_RAW_BITS} bits, got {len(raw_bits)}"
-        )
-    if any(bit not in (0, 1) for bit in raw_bits):
-        raise PricehaxProfileError("raw image bits must contain only 0 or 1")
-
-    encoded_bits: list[int] = [raw_bits[0]]
-    run_length = 1
-    previous = raw_bits[0]
-    for bit in raw_bits[1:]:
-        if bit == previous:
-            run_length += 1
-            continue
-        binary = f"{run_length:b}"
-        encoded_bits.extend((0,) * (len(binary) - 1))
-        encoded_bits.extend(int(value) for value in binary)
-        previous = bit
-        run_length = 1
-    binary = f"{run_length:b}"
-    encoded_bits.extend((0,) * (len(binary) - 1))
-    encoded_bits.extend(int(value) for value in binary)
-
-    encoded_bits.extend((0,) * (-len(encoded_bits) % 8))
-    payload = _pack_bits(encoded_bits)
+def _pad_packets(payload: bytes) -> bytes:
     padded_length = (
         (len(payload) + PRICEHAX_BYTES_PER_FRAME - 1) // PRICEHAX_BYTES_PER_FRAME
     ) * PRICEHAX_BYTES_PER_FRAME
+    return payload + bytes(padded_length - len(payload))
+
+
+def encode_pricehax_rle(raw_bits: Sequence[int]) -> EncodedImage:
+    """Transcribe PricehaxBT's published binary Elias-gamma RLE control flow.
+
+    The upstream loop records the terminal run at ``m == j - 1``. This retains
+    its historical all-one output ``80 00 B5 FF`` rather than correcting the
+    apparent off-by-one. Compressed mode pads to 320-bit groups before assigning
+    both ``datalen`` and ``padded_datalen``, so the announced length is padded.
+    """
+    _validate_raw_bits(raw_bits)
+
+    run_lengths: list[int] = []
+    last_index = len(raw_bits) - 1
+    run_length = 1
+    previous = raw_bits[0]
+    for index in range(1, last_index + 1):
+        bit = raw_bits[index]
+        if bit == previous:
+            run_length += 1
+            if index == last_index - 1:
+                run_lengths.append(run_length)
+        else:
+            run_lengths.append(run_length)
+            run_length = 1
+            if index == last_index - 1:
+                run_lengths.append(1)
+        previous = bit
+
+    encoded_bits: list[int] = [raw_bits[0]]
+    for length in run_lengths:
+        binary = f"{length:b}"
+        encoded_bits.extend((0,) * (len(binary) - 1))
+        encoded_bits.extend(int(value) for value in binary)
+    encoded_bits.extend((0,) * (-len(encoded_bits) % 8))
+
+    payload = _pack_bits(encoded_bits)
+    padded_payload = _pad_packets(payload)
     return EncodedImage(
         payload=payload,
-        padded_payload=payload + bytes(padded_length - len(payload)),
+        padded_payload=padded_payload,
+        announced_length=len(padded_payload),
         compression_type=2,
     )
 
 
+def encode_pricehax_raw(raw_bits: Sequence[int]) -> EncodedImage:
+    """Pack an uncompressed image and pad only its transport packets."""
+    _validate_raw_bits(raw_bits)
+    payload = _pack_bits(raw_bits)
+    return EncodedImage(
+        payload=payload,
+        padded_payload=_pad_packets(payload),
+        announced_length=len(payload),
+        compression_type=0,
+    )
+
+
 def make_all_white_type_1327_image() -> EncodedImage:
-    """Create a deterministic full-screen white image in both color planes."""
+    """Create PricehaxBT-exact compressed full-screen white image data."""
     return encode_pricehax_rle(bytes((1,)) * PRICEHAX_RAW_BITS)
+
+
+def make_all_white_type_1327_raw_image() -> EncodedImage:
+    """Create uncompressed full-screen white image data in both planes."""
+    return encode_pricehax_raw(bytes((1,)) * PRICEHAX_RAW_BITS)
 
 
 def make_pricehax_data_bodies(encoded: EncodedImage) -> list[bytes]:

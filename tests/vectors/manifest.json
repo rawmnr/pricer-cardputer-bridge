@@ -9,13 +9,7 @@
     "raw_frame_plid_order": "02b3b73f",
     "modulation": 16
   },
-  "profile_revision": "T008D-r1",
-  "transmission": {
-    "wake_repeats": 400,
-    "wake_repeat_gap_us": 2000,
-    "image_repeats": 1,
-    "image_repeat_gap_us": 0
-  },
+  "profile_revision": "T008E-r1",
   "vectors": [
     {
       "name": "wake.bin",
@@ -105,13 +99,14 @@
   "pricehax_1327": {
     "upstream_commit": "3043f964595f90fdb6835640275751277523f809",
     "image": {
-      "description": "full-screen all-white, two planes",
+      "description": "full-screen all-white, upstream-exact compressed two planes",
       "width": 208,
       "height": 112,
       "raw_bit_count": 46592,
       "raw_byte_count": 5824,
       "encoded_unpadded_length": 4,
       "encoded_padded_length": 40,
+      "announced_length": 40,
       "frame_count": 1
     },
     "vectors": [
@@ -129,9 +124,9 @@
         "name": "pricehax-params-page2.bin",
         "command": "0x05",
         "frame_length": 38,
-        "payload_hex": "000400020200d0007000000000000088000000000000",
-        "finalized_hex": "000000408502b3b73f3400000005000400020200d00070000000000000880000000000000f47",
-        "crc16_le_hex": "0f47",
+        "payload_hex": "002800020200d0007000000000000088000000000000",
+        "finalized_hex": "000000408502b3b73f3400000005002800020200d000700000000000008800000000000028f4",
+        "crc16_le_hex": "28f4",
         "repeats": 10,
         "inter_repeat_gap_us": 2000
       },
@@ -139,9 +134,1515 @@
         "name": "pricehax-data-0000.bin",
         "command": "0x20",
         "frame_length": 58,
-        "payload_hex": "00008000b600000000000000000000000000000000000000000000000000000000000000000000000000",
-        "finalized_hex": "000000408502b3b73f340000002000008000b6000000000000000000000000000000000000000000000000000000000000000000000000007d18",
-        "crc16_le_hex": "7d18",
+        "payload_hex": "00008000b5ff000000000000000000000000000000000000000000000000000000000000000000000000",
+        "finalized_hex": "000000408502b3b73f340000002000008000b5ff000000000000000000000000000000000000000000000000000000000000000000000000cb1a",
+        "crc16_le_hex": "cb1a",
+        "repeats": 3,
+        "inter_repeat_gap_us": 2000
+      },
+      {
+        "name": "pricehax-refresh.bin",
+        "command": "0x01",
+        "frame_length": 34,
+        "payload_hex": "000000000000000000000000000000000000",
+        "finalized_hex": "000000408502b3b73f3400000001000000000000000000000000000000000000fbd5",
+        "crc16_le_hex": "fbd5",
+        "repeats": 50,
+        "inter_repeat_gap_us": 2000
+      }
+    ]
+  },
+  "pricehax_1327_raw": {
+    "upstream_commit": "3043f964595f90fdb6835640275751277523f809",
+    "image": {
+      "description": "full-screen all-white, raw two planes",
+      "width": 208,
+      "height": 112,
+      "raw_bit_count": 46592,
+      "raw_byte_count": 5824,
+      "encoded_unpadded_length": 5824,
+      "encoded_padded_length": 5840,
+      "announced_length": 5824,
+      "frame_count": 146
+    },
+    "vectors": [
+      {
+        "name": "pricehax-wake-97.bin",
+        "command": "0x97",
+        "frame_length": 36,
+        "payload_hex": "010000000101010101010101010101010101010101010101",
+        "finalized_hex": "000000408502b3b73f97010000000101010101010101010101010101010101010101402c",
+        "crc16_le_hex": "402c",
+        "repeats": 500,
+        "inter_repeat_gap_us": 2000
+      },
+      {
+        "name": "pricehax-raw-params-page2.bin",
+        "command": "0x05",
+        "frame_length": 38,
+        "payload_hex": "16c000000200d0007000000000000088000000000000",
+        "finalized_hex": "000000408502b3b73f340000000516c000000200d0007000000000000088000000000000cd42",
+        "crc16_le_hex": "cd42",
+        "repeats": 10,
+        "inter_repeat_gap_us": 2000
+      },
+      {
+        "name": "pricehax-raw-data-0000.bin",
+        "command": "0x20",
+        "frame_length": 58,
+        "payload_hex": "0000ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+        "finalized_hex": "000000408502b3b73f34000000200000ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff27f3",
+        "crc16_le_hex": "27f3",
+        "repeats": 3,
+        "inter_repeat_gap_us": 2000
+      },
+      {
+        "name": "pricehax-raw-data-0001.bin",
+        "command": "0x20",
+        "frame_length": 58,
+        "payload_hex": "0001ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+        "finalized_hex": "000000408502b3b73f34000000200001fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff06d",
+        "crc16_le_hex": "f06d",
+        "repeats": 3,
+        "inter_repeat_gap_us": 2000
+      },
+      {
+        "name": "pricehax-raw-data-0002.bin",
+        "command": "0x20",
+        "frame_length": 58,
+        "payload_hex": "0002ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+        "finalized_hex": "000000408502b3b73f34000000200002ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff98c6",
+        "crc16_le_hex": "98c6",
+        "repeats": 3,
+        "inter_repeat_gap_us": 2000
+      },
+      {
+        "name": "pricehax-raw-data-0003.bin",
+        "command": "0x20",
+        "frame_length": 58,
+        "payload_hex": "0003ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+        "finalized_hex": "000000408502b3b73f34000000200003ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff4f58",
+        "crc16_le_hex": "4f58",
+        "repeats": 3,
+        "inter_repeat_gap_us": 2000
+      },
+      {
+        "name": "pricehax-raw-data-0004.bin",
+        "command": "0x20",
+        "frame_length": 58,
+        "payload_hex": "0004ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+        "finalized_hex": "000000408502b3b73f34000000200004ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff5998",
+        "crc16_le_hex": "5998",
+        "repeats": 3,
+        "inter_repeat_gap_us": 2000
+      },
+      {
+        "name": "pricehax-raw-data-0005.bin",
+        "command": "0x20",
+        "frame_length": 58,
+        "payload_hex": "0005ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+        "finalized_hex": "000000408502b3b73f34000000200005ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff8e06",
+        "crc16_le_hex": "8e06",
+        "repeats": 3,
+        "inter_repeat_gap_us": 2000
+      },
+      {
+        "name": "pricehax-raw-data-0006.bin",
+        "command": "0x20",
+        "frame_length": 58,
+        "payload_hex": "0006ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+        "finalized_hex": "000000408502b3b73f34000000200006ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffe6ad",
+        "crc16_le_hex": "e6ad",
+        "repeats": 3,
+        "inter_repeat_gap_us": 2000
+      },
+      {
+        "name": "pricehax-raw-data-0007.bin",
+        "command": "0x20",
+        "frame_length": 58,
+        "payload_hex": "0007ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+        "finalized_hex": "000000408502b3b73f34000000200007ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff3133",
+        "crc16_le_hex": "3133",
+        "repeats": 3,
+        "inter_repeat_gap_us": 2000
+      },
+      {
+        "name": "pricehax-raw-data-0008.bin",
+        "command": "0x20",
+        "frame_length": 58,
+        "payload_hex": "0008ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+        "finalized_hex": "000000408502b3b73f34000000200008ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffdb25",
+        "crc16_le_hex": "db25",
+        "repeats": 3,
+        "inter_repeat_gap_us": 2000
+      },
+      {
+        "name": "pricehax-raw-data-0009.bin",
+        "command": "0x20",
+        "frame_length": 58,
+        "payload_hex": "0009ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+        "finalized_hex": "000000408502b3b73f34000000200009ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff0cbb",
+        "crc16_le_hex": "0cbb",
+        "repeats": 3,
+        "inter_repeat_gap_us": 2000
+      },
+      {
+        "name": "pricehax-raw-data-0010.bin",
+        "command": "0x20",
+        "frame_length": 58,
+        "payload_hex": "000affffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+        "finalized_hex": "000000408502b3b73f3400000020000affffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff6410",
+        "crc16_le_hex": "6410",
+        "repeats": 3,
+        "inter_repeat_gap_us": 2000
+      },
+      {
+        "name": "pricehax-raw-data-0011.bin",
+        "command": "0x20",
+        "frame_length": 58,
+        "payload_hex": "000bffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+        "finalized_hex": "000000408502b3b73f3400000020000bffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffb38e",
+        "crc16_le_hex": "b38e",
+        "repeats": 3,
+        "inter_repeat_gap_us": 2000
+      },
+      {
+        "name": "pricehax-raw-data-0012.bin",
+        "command": "0x20",
+        "frame_length": 58,
+        "payload_hex": "000cffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+        "finalized_hex": "000000408502b3b73f3400000020000cffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffa54e",
+        "crc16_le_hex": "a54e",
+        "repeats": 3,
+        "inter_repeat_gap_us": 2000
+      },
+      {
+        "name": "pricehax-raw-data-0013.bin",
+        "command": "0x20",
+        "frame_length": 58,
+        "payload_hex": "000dffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+        "finalized_hex": "000000408502b3b73f3400000020000dffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff72d0",
+        "crc16_le_hex": "72d0",
+        "repeats": 3,
+        "inter_repeat_gap_us": 2000
+      },
+      {
+        "name": "pricehax-raw-data-0014.bin",
+        "command": "0x20",
+        "frame_length": 58,
+        "payload_hex": "000effffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+        "finalized_hex": "000000408502b3b73f3400000020000effffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff1a7b",
+        "crc16_le_hex": "1a7b",
+        "repeats": 3,
+        "inter_repeat_gap_us": 2000
+      },
+      {
+        "name": "pricehax-raw-data-0015.bin",
+        "command": "0x20",
+        "frame_length": 58,
+        "payload_hex": "000fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+        "finalized_hex": "000000408502b3b73f3400000020000fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffcde5",
+        "crc16_le_hex": "cde5",
+        "repeats": 3,
+        "inter_repeat_gap_us": 2000
+      },
+      {
+        "name": "pricehax-raw-data-0016.bin",
+        "command": "0x20",
+        "frame_length": 58,
+        "payload_hex": "0010ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+        "finalized_hex": "000000408502b3b73f34000000200010ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffce56",
+        "crc16_le_hex": "ce56",
+        "repeats": 3,
+        "inter_repeat_gap_us": 2000
+      },
+      {
+        "name": "pricehax-raw-data-0017.bin",
+        "command": "0x20",
+        "frame_length": 58,
+        "payload_hex": "0011ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+        "finalized_hex": "000000408502b3b73f34000000200011ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff19c8",
+        "crc16_le_hex": "19c8",
+        "repeats": 3,
+        "inter_repeat_gap_us": 2000
+      },
+      {
+        "name": "pricehax-raw-data-0018.bin",
+        "command": "0x20",
+        "frame_length": 58,
+        "payload_hex": "0012ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+        "finalized_hex": "000000408502b3b73f34000000200012ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff7163",
+        "crc16_le_hex": "7163",
+        "repeats": 3,
+        "inter_repeat_gap_us": 2000
+      },
+      {
+        "name": "pricehax-raw-data-0019.bin",
+        "command": "0x20",
+        "frame_length": 58,
+        "payload_hex": "0013ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+        "finalized_hex": "000000408502b3b73f34000000200013ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffa6fd",
+        "crc16_le_hex": "a6fd",
+        "repeats": 3,
+        "inter_repeat_gap_us": 2000
+      },
+      {
+        "name": "pricehax-raw-data-0020.bin",
+        "command": "0x20",
+        "frame_length": 58,
+        "payload_hex": "0014ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+        "finalized_hex": "000000408502b3b73f34000000200014ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffb03d",
+        "crc16_le_hex": "b03d",
+        "repeats": 3,
+        "inter_repeat_gap_us": 2000
+      },
+      {
+        "name": "pricehax-raw-data-0021.bin",
+        "command": "0x20",
+        "frame_length": 58,
+        "payload_hex": "0015ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+        "finalized_hex": "000000408502b3b73f34000000200015ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff67a3",
+        "crc16_le_hex": "67a3",
+        "repeats": 3,
+        "inter_repeat_gap_us": 2000
+      },
+      {
+        "name": "pricehax-raw-data-0022.bin",
+        "command": "0x20",
+        "frame_length": 58,
+        "payload_hex": "0016ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+        "finalized_hex": "000000408502b3b73f34000000200016ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff0f08",
+        "crc16_le_hex": "0f08",
+        "repeats": 3,
+        "inter_repeat_gap_us": 2000
+      },
+      {
+        "name": "pricehax-raw-data-0023.bin",
+        "command": "0x20",
+        "frame_length": 58,
+        "payload_hex": "0017ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+        "finalized_hex": "000000408502b3b73f34000000200017ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffd896",
+        "crc16_le_hex": "d896",
+        "repeats": 3,
+        "inter_repeat_gap_us": 2000
+      },
+      {
+        "name": "pricehax-raw-data-0024.bin",
+        "command": "0x20",
+        "frame_length": 58,
+        "payload_hex": "0018ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+        "finalized_hex": "000000408502b3b73f34000000200018ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff3280",
+        "crc16_le_hex": "3280",
+        "repeats": 3,
+        "inter_repeat_gap_us": 2000
+      },
+      {
+        "name": "pricehax-raw-data-0025.bin",
+        "command": "0x20",
+        "frame_length": 58,
+        "payload_hex": "0019ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+        "finalized_hex": "000000408502b3b73f34000000200019ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffe51e",
+        "crc16_le_hex": "e51e",
+        "repeats": 3,
+        "inter_repeat_gap_us": 2000
+      },
+      {
+        "name": "pricehax-raw-data-0026.bin",
+        "command": "0x20",
+        "frame_length": 58,
+        "payload_hex": "001affffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+        "finalized_hex": "000000408502b3b73f3400000020001affffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff8db5",
+        "crc16_le_hex": "8db5",
+        "repeats": 3,
+        "inter_repeat_gap_us": 2000
+      },
+      {
+        "name": "pricehax-raw-data-0027.bin",
+        "command": "0x20",
+        "frame_length": 58,
+        "payload_hex": "001bffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+        "finalized_hex": "000000408502b3b73f3400000020001bffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff5a2b",
+        "crc16_le_hex": "5a2b",
+        "repeats": 3,
+        "inter_repeat_gap_us": 2000
+      },
+      {
+        "name": "pricehax-raw-data-0028.bin",
+        "command": "0x20",
+        "frame_length": 58,
+        "payload_hex": "001cffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+        "finalized_hex": "000000408502b3b73f3400000020001cffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff4ceb",
+        "crc16_le_hex": "4ceb",
+        "repeats": 3,
+        "inter_repeat_gap_us": 2000
+      },
+      {
+        "name": "pricehax-raw-data-0029.bin",
+        "command": "0x20",
+        "frame_length": 58,
+        "payload_hex": "001dffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+        "finalized_hex": "000000408502b3b73f3400000020001dffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff9b75",
+        "crc16_le_hex": "9b75",
+        "repeats": 3,
+        "inter_repeat_gap_us": 2000
+      },
+      {
+        "name": "pricehax-raw-data-0030.bin",
+        "command": "0x20",
+        "frame_length": 58,
+        "payload_hex": "001effffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+        "finalized_hex": "000000408502b3b73f3400000020001efffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff3de",
+        "crc16_le_hex": "f3de",
+        "repeats": 3,
+        "inter_repeat_gap_us": 2000
+      },
+      {
+        "name": "pricehax-raw-data-0031.bin",
+        "command": "0x20",
+        "frame_length": 58,
+        "payload_hex": "001fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+        "finalized_hex": "000000408502b3b73f3400000020001fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff2440",
+        "crc16_le_hex": "2440",
+        "repeats": 3,
+        "inter_repeat_gap_us": 2000
+      },
+      {
+        "name": "pricehax-raw-data-0032.bin",
+        "command": "0x20",
+        "frame_length": 58,
+        "payload_hex": "0020ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+        "finalized_hex": "000000408502b3b73f34000000200020ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffe4b0",
+        "crc16_le_hex": "e4b0",
+        "repeats": 3,
+        "inter_repeat_gap_us": 2000
+      },
+      {
+        "name": "pricehax-raw-data-0033.bin",
+        "command": "0x20",
+        "frame_length": 58,
+        "payload_hex": "0021ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+        "finalized_hex": "000000408502b3b73f34000000200021ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff332e",
+        "crc16_le_hex": "332e",
+        "repeats": 3,
+        "inter_repeat_gap_us": 2000
+      },
+      {
+        "name": "pricehax-raw-data-0034.bin",
+        "command": "0x20",
+        "frame_length": 58,
+        "payload_hex": "0022ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+        "finalized_hex": "000000408502b3b73f34000000200022ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff5b85",
+        "crc16_le_hex": "5b85",
+        "repeats": 3,
+        "inter_repeat_gap_us": 2000
+      },
+      {
+        "name": "pricehax-raw-data-0035.bin",
+        "command": "0x20",
+        "frame_length": 58,
+        "payload_hex": "0023ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+        "finalized_hex": "000000408502b3b73f34000000200023ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff8c1b",
+        "crc16_le_hex": "8c1b",
+        "repeats": 3,
+        "inter_repeat_gap_us": 2000
+      },
+      {
+        "name": "pricehax-raw-data-0036.bin",
+        "command": "0x20",
+        "frame_length": 58,
+        "payload_hex": "0024ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+        "finalized_hex": "000000408502b3b73f34000000200024ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff9adb",
+        "crc16_le_hex": "9adb",
+        "repeats": 3,
+        "inter_repeat_gap_us": 2000
+      },
+      {
+        "name": "pricehax-raw-data-0037.bin",
+        "command": "0x20",
+        "frame_length": 58,
+        "payload_hex": "0025ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+        "finalized_hex": "000000408502b3b73f34000000200025ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff4d45",
+        "crc16_le_hex": "4d45",
+        "repeats": 3,
+        "inter_repeat_gap_us": 2000
+      },
+      {
+        "name": "pricehax-raw-data-0038.bin",
+        "command": "0x20",
+        "frame_length": 58,
+        "payload_hex": "0026ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+        "finalized_hex": "000000408502b3b73f34000000200026ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff25ee",
+        "crc16_le_hex": "25ee",
+        "repeats": 3,
+        "inter_repeat_gap_us": 2000
+      },
+      {
+        "name": "pricehax-raw-data-0039.bin",
+        "command": "0x20",
+        "frame_length": 58,
+        "payload_hex": "0027ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+        "finalized_hex": "000000408502b3b73f34000000200027fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff270",
+        "crc16_le_hex": "f270",
+        "repeats": 3,
+        "inter_repeat_gap_us": 2000
+      },
+      {
+        "name": "pricehax-raw-data-0040.bin",
+        "command": "0x20",
+        "frame_length": 58,
+        "payload_hex": "0028ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+        "finalized_hex": "000000408502b3b73f34000000200028ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff1866",
+        "crc16_le_hex": "1866",
+        "repeats": 3,
+        "inter_repeat_gap_us": 2000
+      },
+      {
+        "name": "pricehax-raw-data-0041.bin",
+        "command": "0x20",
+        "frame_length": 58,
+        "payload_hex": "0029ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+        "finalized_hex": "000000408502b3b73f34000000200029ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffcff8",
+        "crc16_le_hex": "cff8",
+        "repeats": 3,
+        "inter_repeat_gap_us": 2000
+      },
+      {
+        "name": "pricehax-raw-data-0042.bin",
+        "command": "0x20",
+        "frame_length": 58,
+        "payload_hex": "002affffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+        "finalized_hex": "000000408502b3b73f3400000020002affffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffa753",
+        "crc16_le_hex": "a753",
+        "repeats": 3,
+        "inter_repeat_gap_us": 2000
+      },
+      {
+        "name": "pricehax-raw-data-0043.bin",
+        "command": "0x20",
+        "frame_length": 58,
+        "payload_hex": "002bffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+        "finalized_hex": "000000408502b3b73f3400000020002bffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff70cd",
+        "crc16_le_hex": "70cd",
+        "repeats": 3,
+        "inter_repeat_gap_us": 2000
+      },
+      {
+        "name": "pricehax-raw-data-0044.bin",
+        "command": "0x20",
+        "frame_length": 58,
+        "payload_hex": "002cffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+        "finalized_hex": "000000408502b3b73f3400000020002cffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff660d",
+        "crc16_le_hex": "660d",
+        "repeats": 3,
+        "inter_repeat_gap_us": 2000
+      },
+      {
+        "name": "pricehax-raw-data-0045.bin",
+        "command": "0x20",
+        "frame_length": 58,
+        "payload_hex": "002dffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+        "finalized_hex": "000000408502b3b73f3400000020002dffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffb193",
+        "crc16_le_hex": "b193",
+        "repeats": 3,
+        "inter_repeat_gap_us": 2000
+      },
+      {
+        "name": "pricehax-raw-data-0046.bin",
+        "command": "0x20",
+        "frame_length": 58,
+        "payload_hex": "002effffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+        "finalized_hex": "000000408502b3b73f3400000020002effffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffd938",
+        "crc16_le_hex": "d938",
+        "repeats": 3,
+        "inter_repeat_gap_us": 2000
+      },
+      {
+        "name": "pricehax-raw-data-0047.bin",
+        "command": "0x20",
+        "frame_length": 58,
+        "payload_hex": "002fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+        "finalized_hex": "000000408502b3b73f3400000020002fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff0ea6",
+        "crc16_le_hex": "0ea6",
+        "repeats": 3,
+        "inter_repeat_gap_us": 2000
+      },
+      {
+        "name": "pricehax-raw-data-0048.bin",
+        "command": "0x20",
+        "frame_length": 58,
+        "payload_hex": "0030ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+        "finalized_hex": "000000408502b3b73f34000000200030ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff0d15",
+        "crc16_le_hex": "0d15",
+        "repeats": 3,
+        "inter_repeat_gap_us": 2000
+      },
+      {
+        "name": "pricehax-raw-data-0049.bin",
+        "command": "0x20",
+        "frame_length": 58,
+        "payload_hex": "0031ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+        "finalized_hex": "000000408502b3b73f34000000200031ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffda8b",
+        "crc16_le_hex": "da8b",
+        "repeats": 3,
+        "inter_repeat_gap_us": 2000
+      },
+      {
+        "name": "pricehax-raw-data-0050.bin",
+        "command": "0x20",
+        "frame_length": 58,
+        "payload_hex": "0032ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+        "finalized_hex": "000000408502b3b73f34000000200032ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffb220",
+        "crc16_le_hex": "b220",
+        "repeats": 3,
+        "inter_repeat_gap_us": 2000
+      },
+      {
+        "name": "pricehax-raw-data-0051.bin",
+        "command": "0x20",
+        "frame_length": 58,
+        "payload_hex": "0033ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+        "finalized_hex": "000000408502b3b73f34000000200033ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff65be",
+        "crc16_le_hex": "65be",
+        "repeats": 3,
+        "inter_repeat_gap_us": 2000
+      },
+      {
+        "name": "pricehax-raw-data-0052.bin",
+        "command": "0x20",
+        "frame_length": 58,
+        "payload_hex": "0034ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+        "finalized_hex": "000000408502b3b73f34000000200034ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff737e",
+        "crc16_le_hex": "737e",
+        "repeats": 3,
+        "inter_repeat_gap_us": 2000
+      },
+      {
+        "name": "pricehax-raw-data-0053.bin",
+        "command": "0x20",
+        "frame_length": 58,
+        "payload_hex": "0035ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+        "finalized_hex": "000000408502b3b73f34000000200035ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffa4e0",
+        "crc16_le_hex": "a4e0",
+        "repeats": 3,
+        "inter_repeat_gap_us": 2000
+      },
+      {
+        "name": "pricehax-raw-data-0054.bin",
+        "command": "0x20",
+        "frame_length": 58,
+        "payload_hex": "0036ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+        "finalized_hex": "000000408502b3b73f34000000200036ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffcc4b",
+        "crc16_le_hex": "cc4b",
+        "repeats": 3,
+        "inter_repeat_gap_us": 2000
+      },
+      {
+        "name": "pricehax-raw-data-0055.bin",
+        "command": "0x20",
+        "frame_length": 58,
+        "payload_hex": "0037ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+        "finalized_hex": "000000408502b3b73f34000000200037ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff1bd5",
+        "crc16_le_hex": "1bd5",
+        "repeats": 3,
+        "inter_repeat_gap_us": 2000
+      },
+      {
+        "name": "pricehax-raw-data-0056.bin",
+        "command": "0x20",
+        "frame_length": 58,
+        "payload_hex": "0038ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+        "finalized_hex": "000000408502b3b73f34000000200038fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff1c3",
+        "crc16_le_hex": "f1c3",
+        "repeats": 3,
+        "inter_repeat_gap_us": 2000
+      },
+      {
+        "name": "pricehax-raw-data-0057.bin",
+        "command": "0x20",
+        "frame_length": 58,
+        "payload_hex": "0039ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+        "finalized_hex": "000000408502b3b73f34000000200039ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff265d",
+        "crc16_le_hex": "265d",
+        "repeats": 3,
+        "inter_repeat_gap_us": 2000
+      },
+      {
+        "name": "pricehax-raw-data-0058.bin",
+        "command": "0x20",
+        "frame_length": 58,
+        "payload_hex": "003affffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+        "finalized_hex": "000000408502b3b73f3400000020003affffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff4ef6",
+        "crc16_le_hex": "4ef6",
+        "repeats": 3,
+        "inter_repeat_gap_us": 2000
+      },
+      {
+        "name": "pricehax-raw-data-0059.bin",
+        "command": "0x20",
+        "frame_length": 58,
+        "payload_hex": "003bffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+        "finalized_hex": "000000408502b3b73f3400000020003bffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff9968",
+        "crc16_le_hex": "9968",
+        "repeats": 3,
+        "inter_repeat_gap_us": 2000
+      },
+      {
+        "name": "pricehax-raw-data-0060.bin",
+        "command": "0x20",
+        "frame_length": 58,
+        "payload_hex": "003cffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+        "finalized_hex": "000000408502b3b73f3400000020003cffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff8fa8",
+        "crc16_le_hex": "8fa8",
+        "repeats": 3,
+        "inter_repeat_gap_us": 2000
+      },
+      {
+        "name": "pricehax-raw-data-0061.bin",
+        "command": "0x20",
+        "frame_length": 58,
+        "payload_hex": "003dffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+        "finalized_hex": "000000408502b3b73f3400000020003dffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff5836",
+        "crc16_le_hex": "5836",
+        "repeats": 3,
+        "inter_repeat_gap_us": 2000
+      },
+      {
+        "name": "pricehax-raw-data-0062.bin",
+        "command": "0x20",
+        "frame_length": 58,
+        "payload_hex": "003effffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+        "finalized_hex": "000000408502b3b73f3400000020003effffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff309d",
+        "crc16_le_hex": "309d",
+        "repeats": 3,
+        "inter_repeat_gap_us": 2000
+      },
+      {
+        "name": "pricehax-raw-data-0063.bin",
+        "command": "0x20",
+        "frame_length": 58,
+        "payload_hex": "003fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+        "finalized_hex": "000000408502b3b73f3400000020003fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffe703",
+        "crc16_le_hex": "e703",
+        "repeats": 3,
+        "inter_repeat_gap_us": 2000
+      },
+      {
+        "name": "pricehax-raw-data-0064.bin",
+        "command": "0x20",
+        "frame_length": 58,
+        "payload_hex": "0040ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+        "finalized_hex": "000000408502b3b73f34000000200040ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffa174",
+        "crc16_le_hex": "a174",
+        "repeats": 3,
+        "inter_repeat_gap_us": 2000
+      },
+      {
+        "name": "pricehax-raw-data-0065.bin",
+        "command": "0x20",
+        "frame_length": 58,
+        "payload_hex": "0041ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+        "finalized_hex": "000000408502b3b73f34000000200041ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff76ea",
+        "crc16_le_hex": "76ea",
+        "repeats": 3,
+        "inter_repeat_gap_us": 2000
+      },
+      {
+        "name": "pricehax-raw-data-0066.bin",
+        "command": "0x20",
+        "frame_length": 58,
+        "payload_hex": "0042ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+        "finalized_hex": "000000408502b3b73f34000000200042ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff1e41",
+        "crc16_le_hex": "1e41",
+        "repeats": 3,
+        "inter_repeat_gap_us": 2000
+      },
+      {
+        "name": "pricehax-raw-data-0067.bin",
+        "command": "0x20",
+        "frame_length": 58,
+        "payload_hex": "0043ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+        "finalized_hex": "000000408502b3b73f34000000200043ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffc9df",
+        "crc16_le_hex": "c9df",
+        "repeats": 3,
+        "inter_repeat_gap_us": 2000
+      },
+      {
+        "name": "pricehax-raw-data-0068.bin",
+        "command": "0x20",
+        "frame_length": 58,
+        "payload_hex": "0044ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+        "finalized_hex": "000000408502b3b73f34000000200044ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffdf1f",
+        "crc16_le_hex": "df1f",
+        "repeats": 3,
+        "inter_repeat_gap_us": 2000
+      },
+      {
+        "name": "pricehax-raw-data-0069.bin",
+        "command": "0x20",
+        "frame_length": 58,
+        "payload_hex": "0045ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+        "finalized_hex": "000000408502b3b73f34000000200045ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff0881",
+        "crc16_le_hex": "0881",
+        "repeats": 3,
+        "inter_repeat_gap_us": 2000
+      },
+      {
+        "name": "pricehax-raw-data-0070.bin",
+        "command": "0x20",
+        "frame_length": 58,
+        "payload_hex": "0046ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+        "finalized_hex": "000000408502b3b73f34000000200046ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff602a",
+        "crc16_le_hex": "602a",
+        "repeats": 3,
+        "inter_repeat_gap_us": 2000
+      },
+      {
+        "name": "pricehax-raw-data-0071.bin",
+        "command": "0x20",
+        "frame_length": 58,
+        "payload_hex": "0047ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+        "finalized_hex": "000000408502b3b73f34000000200047ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffb7b4",
+        "crc16_le_hex": "b7b4",
+        "repeats": 3,
+        "inter_repeat_gap_us": 2000
+      },
+      {
+        "name": "pricehax-raw-data-0072.bin",
+        "command": "0x20",
+        "frame_length": 58,
+        "payload_hex": "0048ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+        "finalized_hex": "000000408502b3b73f34000000200048ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff5da2",
+        "crc16_le_hex": "5da2",
+        "repeats": 3,
+        "inter_repeat_gap_us": 2000
+      },
+      {
+        "name": "pricehax-raw-data-0073.bin",
+        "command": "0x20",
+        "frame_length": 58,
+        "payload_hex": "0049ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+        "finalized_hex": "000000408502b3b73f34000000200049ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff8a3c",
+        "crc16_le_hex": "8a3c",
+        "repeats": 3,
+        "inter_repeat_gap_us": 2000
+      },
+      {
+        "name": "pricehax-raw-data-0074.bin",
+        "command": "0x20",
+        "frame_length": 58,
+        "payload_hex": "004affffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+        "finalized_hex": "000000408502b3b73f3400000020004affffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffe297",
+        "crc16_le_hex": "e297",
+        "repeats": 3,
+        "inter_repeat_gap_us": 2000
+      },
+      {
+        "name": "pricehax-raw-data-0075.bin",
+        "command": "0x20",
+        "frame_length": 58,
+        "payload_hex": "004bffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+        "finalized_hex": "000000408502b3b73f3400000020004bffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff3509",
+        "crc16_le_hex": "3509",
+        "repeats": 3,
+        "inter_repeat_gap_us": 2000
+      },
+      {
+        "name": "pricehax-raw-data-0076.bin",
+        "command": "0x20",
+        "frame_length": 58,
+        "payload_hex": "004cffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+        "finalized_hex": "000000408502b3b73f3400000020004cffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff23c9",
+        "crc16_le_hex": "23c9",
+        "repeats": 3,
+        "inter_repeat_gap_us": 2000
+      },
+      {
+        "name": "pricehax-raw-data-0077.bin",
+        "command": "0x20",
+        "frame_length": 58,
+        "payload_hex": "004dffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+        "finalized_hex": "000000408502b3b73f3400000020004dfffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff457",
+        "crc16_le_hex": "f457",
+        "repeats": 3,
+        "inter_repeat_gap_us": 2000
+      },
+      {
+        "name": "pricehax-raw-data-0078.bin",
+        "command": "0x20",
+        "frame_length": 58,
+        "payload_hex": "004effffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+        "finalized_hex": "000000408502b3b73f3400000020004effffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff9cfc",
+        "crc16_le_hex": "9cfc",
+        "repeats": 3,
+        "inter_repeat_gap_us": 2000
+      },
+      {
+        "name": "pricehax-raw-data-0079.bin",
+        "command": "0x20",
+        "frame_length": 58,
+        "payload_hex": "004fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+        "finalized_hex": "000000408502b3b73f3400000020004fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff4b62",
+        "crc16_le_hex": "4b62",
+        "repeats": 3,
+        "inter_repeat_gap_us": 2000
+      },
+      {
+        "name": "pricehax-raw-data-0080.bin",
+        "command": "0x20",
+        "frame_length": 58,
+        "payload_hex": "0050ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+        "finalized_hex": "000000408502b3b73f34000000200050ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff48d1",
+        "crc16_le_hex": "48d1",
+        "repeats": 3,
+        "inter_repeat_gap_us": 2000
+      },
+      {
+        "name": "pricehax-raw-data-0081.bin",
+        "command": "0x20",
+        "frame_length": 58,
+        "payload_hex": "0051ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+        "finalized_hex": "000000408502b3b73f34000000200051ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff9f4f",
+        "crc16_le_hex": "9f4f",
+        "repeats": 3,
+        "inter_repeat_gap_us": 2000
+      },
+      {
+        "name": "pricehax-raw-data-0082.bin",
+        "command": "0x20",
+        "frame_length": 58,
+        "payload_hex": "0052ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+        "finalized_hex": "000000408502b3b73f34000000200052fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff7e4",
+        "crc16_le_hex": "f7e4",
+        "repeats": 3,
+        "inter_repeat_gap_us": 2000
+      },
+      {
+        "name": "pricehax-raw-data-0083.bin",
+        "command": "0x20",
+        "frame_length": 58,
+        "payload_hex": "0053ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+        "finalized_hex": "000000408502b3b73f34000000200053ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff207a",
+        "crc16_le_hex": "207a",
+        "repeats": 3,
+        "inter_repeat_gap_us": 2000
+      },
+      {
+        "name": "pricehax-raw-data-0084.bin",
+        "command": "0x20",
+        "frame_length": 58,
+        "payload_hex": "0054ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+        "finalized_hex": "000000408502b3b73f34000000200054ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff36ba",
+        "crc16_le_hex": "36ba",
+        "repeats": 3,
+        "inter_repeat_gap_us": 2000
+      },
+      {
+        "name": "pricehax-raw-data-0085.bin",
+        "command": "0x20",
+        "frame_length": 58,
+        "payload_hex": "0055ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+        "finalized_hex": "000000408502b3b73f34000000200055ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffe124",
+        "crc16_le_hex": "e124",
+        "repeats": 3,
+        "inter_repeat_gap_us": 2000
+      },
+      {
+        "name": "pricehax-raw-data-0086.bin",
+        "command": "0x20",
+        "frame_length": 58,
+        "payload_hex": "0056ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+        "finalized_hex": "000000408502b3b73f34000000200056ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff898f",
+        "crc16_le_hex": "898f",
+        "repeats": 3,
+        "inter_repeat_gap_us": 2000
+      },
+      {
+        "name": "pricehax-raw-data-0087.bin",
+        "command": "0x20",
+        "frame_length": 58,
+        "payload_hex": "0057ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+        "finalized_hex": "000000408502b3b73f34000000200057ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff5e11",
+        "crc16_le_hex": "5e11",
+        "repeats": 3,
+        "inter_repeat_gap_us": 2000
+      },
+      {
+        "name": "pricehax-raw-data-0088.bin",
+        "command": "0x20",
+        "frame_length": 58,
+        "payload_hex": "0058ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+        "finalized_hex": "000000408502b3b73f34000000200058ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffb407",
+        "crc16_le_hex": "b407",
+        "repeats": 3,
+        "inter_repeat_gap_us": 2000
+      },
+      {
+        "name": "pricehax-raw-data-0089.bin",
+        "command": "0x20",
+        "frame_length": 58,
+        "payload_hex": "0059ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+        "finalized_hex": "000000408502b3b73f34000000200059ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff6399",
+        "crc16_le_hex": "6399",
+        "repeats": 3,
+        "inter_repeat_gap_us": 2000
+      },
+      {
+        "name": "pricehax-raw-data-0090.bin",
+        "command": "0x20",
+        "frame_length": 58,
+        "payload_hex": "005affffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+        "finalized_hex": "000000408502b3b73f3400000020005affffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff0b32",
+        "crc16_le_hex": "0b32",
+        "repeats": 3,
+        "inter_repeat_gap_us": 2000
+      },
+      {
+        "name": "pricehax-raw-data-0091.bin",
+        "command": "0x20",
+        "frame_length": 58,
+        "payload_hex": "005bffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+        "finalized_hex": "000000408502b3b73f3400000020005bffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffdcac",
+        "crc16_le_hex": "dcac",
+        "repeats": 3,
+        "inter_repeat_gap_us": 2000
+      },
+      {
+        "name": "pricehax-raw-data-0092.bin",
+        "command": "0x20",
+        "frame_length": 58,
+        "payload_hex": "005cffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+        "finalized_hex": "000000408502b3b73f3400000020005cffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffca6c",
+        "crc16_le_hex": "ca6c",
+        "repeats": 3,
+        "inter_repeat_gap_us": 2000
+      },
+      {
+        "name": "pricehax-raw-data-0093.bin",
+        "command": "0x20",
+        "frame_length": 58,
+        "payload_hex": "005dffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+        "finalized_hex": "000000408502b3b73f3400000020005dffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff1df2",
+        "crc16_le_hex": "1df2",
+        "repeats": 3,
+        "inter_repeat_gap_us": 2000
+      },
+      {
+        "name": "pricehax-raw-data-0094.bin",
+        "command": "0x20",
+        "frame_length": 58,
+        "payload_hex": "005effffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+        "finalized_hex": "000000408502b3b73f3400000020005effffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff7559",
+        "crc16_le_hex": "7559",
+        "repeats": 3,
+        "inter_repeat_gap_us": 2000
+      },
+      {
+        "name": "pricehax-raw-data-0095.bin",
+        "command": "0x20",
+        "frame_length": 58,
+        "payload_hex": "005fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+        "finalized_hex": "000000408502b3b73f3400000020005fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffa2c7",
+        "crc16_le_hex": "a2c7",
+        "repeats": 3,
+        "inter_repeat_gap_us": 2000
+      },
+      {
+        "name": "pricehax-raw-data-0096.bin",
+        "command": "0x20",
+        "frame_length": 58,
+        "payload_hex": "0060ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+        "finalized_hex": "000000408502b3b73f34000000200060ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff6237",
+        "crc16_le_hex": "6237",
+        "repeats": 3,
+        "inter_repeat_gap_us": 2000
+      },
+      {
+        "name": "pricehax-raw-data-0097.bin",
+        "command": "0x20",
+        "frame_length": 58,
+        "payload_hex": "0061ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+        "finalized_hex": "000000408502b3b73f34000000200061ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffb5a9",
+        "crc16_le_hex": "b5a9",
+        "repeats": 3,
+        "inter_repeat_gap_us": 2000
+      },
+      {
+        "name": "pricehax-raw-data-0098.bin",
+        "command": "0x20",
+        "frame_length": 58,
+        "payload_hex": "0062ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+        "finalized_hex": "000000408502b3b73f34000000200062ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffdd02",
+        "crc16_le_hex": "dd02",
+        "repeats": 3,
+        "inter_repeat_gap_us": 2000
+      },
+      {
+        "name": "pricehax-raw-data-0099.bin",
+        "command": "0x20",
+        "frame_length": 58,
+        "payload_hex": "0063ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+        "finalized_hex": "000000408502b3b73f34000000200063ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff0a9c",
+        "crc16_le_hex": "0a9c",
+        "repeats": 3,
+        "inter_repeat_gap_us": 2000
+      },
+      {
+        "name": "pricehax-raw-data-0100.bin",
+        "command": "0x20",
+        "frame_length": 58,
+        "payload_hex": "0064ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+        "finalized_hex": "000000408502b3b73f34000000200064ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff1c5c",
+        "crc16_le_hex": "1c5c",
+        "repeats": 3,
+        "inter_repeat_gap_us": 2000
+      },
+      {
+        "name": "pricehax-raw-data-0101.bin",
+        "command": "0x20",
+        "frame_length": 58,
+        "payload_hex": "0065ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+        "finalized_hex": "000000408502b3b73f34000000200065ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffcbc2",
+        "crc16_le_hex": "cbc2",
+        "repeats": 3,
+        "inter_repeat_gap_us": 2000
+      },
+      {
+        "name": "pricehax-raw-data-0102.bin",
+        "command": "0x20",
+        "frame_length": 58,
+        "payload_hex": "0066ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+        "finalized_hex": "000000408502b3b73f34000000200066ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffa369",
+        "crc16_le_hex": "a369",
+        "repeats": 3,
+        "inter_repeat_gap_us": 2000
+      },
+      {
+        "name": "pricehax-raw-data-0103.bin",
+        "command": "0x20",
+        "frame_length": 58,
+        "payload_hex": "0067ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+        "finalized_hex": "000000408502b3b73f34000000200067ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff74f7",
+        "crc16_le_hex": "74f7",
+        "repeats": 3,
+        "inter_repeat_gap_us": 2000
+      },
+      {
+        "name": "pricehax-raw-data-0104.bin",
+        "command": "0x20",
+        "frame_length": 58,
+        "payload_hex": "0068ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+        "finalized_hex": "000000408502b3b73f34000000200068ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff9ee1",
+        "crc16_le_hex": "9ee1",
+        "repeats": 3,
+        "inter_repeat_gap_us": 2000
+      },
+      {
+        "name": "pricehax-raw-data-0105.bin",
+        "command": "0x20",
+        "frame_length": 58,
+        "payload_hex": "0069ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+        "finalized_hex": "000000408502b3b73f34000000200069ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff497f",
+        "crc16_le_hex": "497f",
+        "repeats": 3,
+        "inter_repeat_gap_us": 2000
+      },
+      {
+        "name": "pricehax-raw-data-0106.bin",
+        "command": "0x20",
+        "frame_length": 58,
+        "payload_hex": "006affffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+        "finalized_hex": "000000408502b3b73f3400000020006affffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff21d4",
+        "crc16_le_hex": "21d4",
+        "repeats": 3,
+        "inter_repeat_gap_us": 2000
+      },
+      {
+        "name": "pricehax-raw-data-0107.bin",
+        "command": "0x20",
+        "frame_length": 58,
+        "payload_hex": "006bffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+        "finalized_hex": "000000408502b3b73f3400000020006bfffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff64a",
+        "crc16_le_hex": "f64a",
+        "repeats": 3,
+        "inter_repeat_gap_us": 2000
+      },
+      {
+        "name": "pricehax-raw-data-0108.bin",
+        "command": "0x20",
+        "frame_length": 58,
+        "payload_hex": "006cffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+        "finalized_hex": "000000408502b3b73f3400000020006cffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffe08a",
+        "crc16_le_hex": "e08a",
+        "repeats": 3,
+        "inter_repeat_gap_us": 2000
+      },
+      {
+        "name": "pricehax-raw-data-0109.bin",
+        "command": "0x20",
+        "frame_length": 58,
+        "payload_hex": "006dffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+        "finalized_hex": "000000408502b3b73f3400000020006dffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff3714",
+        "crc16_le_hex": "3714",
+        "repeats": 3,
+        "inter_repeat_gap_us": 2000
+      },
+      {
+        "name": "pricehax-raw-data-0110.bin",
+        "command": "0x20",
+        "frame_length": 58,
+        "payload_hex": "006effffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+        "finalized_hex": "000000408502b3b73f3400000020006effffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff5fbf",
+        "crc16_le_hex": "5fbf",
+        "repeats": 3,
+        "inter_repeat_gap_us": 2000
+      },
+      {
+        "name": "pricehax-raw-data-0111.bin",
+        "command": "0x20",
+        "frame_length": 58,
+        "payload_hex": "006fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+        "finalized_hex": "000000408502b3b73f3400000020006fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff8821",
+        "crc16_le_hex": "8821",
+        "repeats": 3,
+        "inter_repeat_gap_us": 2000
+      },
+      {
+        "name": "pricehax-raw-data-0112.bin",
+        "command": "0x20",
+        "frame_length": 58,
+        "payload_hex": "0070ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+        "finalized_hex": "000000408502b3b73f34000000200070ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff8b92",
+        "crc16_le_hex": "8b92",
+        "repeats": 3,
+        "inter_repeat_gap_us": 2000
+      },
+      {
+        "name": "pricehax-raw-data-0113.bin",
+        "command": "0x20",
+        "frame_length": 58,
+        "payload_hex": "0071ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+        "finalized_hex": "000000408502b3b73f34000000200071ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff5c0c",
+        "crc16_le_hex": "5c0c",
+        "repeats": 3,
+        "inter_repeat_gap_us": 2000
+      },
+      {
+        "name": "pricehax-raw-data-0114.bin",
+        "command": "0x20",
+        "frame_length": 58,
+        "payload_hex": "0072ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+        "finalized_hex": "000000408502b3b73f34000000200072ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff34a7",
+        "crc16_le_hex": "34a7",
+        "repeats": 3,
+        "inter_repeat_gap_us": 2000
+      },
+      {
+        "name": "pricehax-raw-data-0115.bin",
+        "command": "0x20",
+        "frame_length": 58,
+        "payload_hex": "0073ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+        "finalized_hex": "000000408502b3b73f34000000200073ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffe339",
+        "crc16_le_hex": "e339",
+        "repeats": 3,
+        "inter_repeat_gap_us": 2000
+      },
+      {
+        "name": "pricehax-raw-data-0116.bin",
+        "command": "0x20",
+        "frame_length": 58,
+        "payload_hex": "0074ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+        "finalized_hex": "000000408502b3b73f34000000200074fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff5f9",
+        "crc16_le_hex": "f5f9",
+        "repeats": 3,
+        "inter_repeat_gap_us": 2000
+      },
+      {
+        "name": "pricehax-raw-data-0117.bin",
+        "command": "0x20",
+        "frame_length": 58,
+        "payload_hex": "0075ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+        "finalized_hex": "000000408502b3b73f34000000200075ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff2267",
+        "crc16_le_hex": "2267",
+        "repeats": 3,
+        "inter_repeat_gap_us": 2000
+      },
+      {
+        "name": "pricehax-raw-data-0118.bin",
+        "command": "0x20",
+        "frame_length": 58,
+        "payload_hex": "0076ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+        "finalized_hex": "000000408502b3b73f34000000200076ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff4acc",
+        "crc16_le_hex": "4acc",
+        "repeats": 3,
+        "inter_repeat_gap_us": 2000
+      },
+      {
+        "name": "pricehax-raw-data-0119.bin",
+        "command": "0x20",
+        "frame_length": 58,
+        "payload_hex": "0077ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+        "finalized_hex": "000000408502b3b73f34000000200077ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff9d52",
+        "crc16_le_hex": "9d52",
+        "repeats": 3,
+        "inter_repeat_gap_us": 2000
+      },
+      {
+        "name": "pricehax-raw-data-0120.bin",
+        "command": "0x20",
+        "frame_length": 58,
+        "payload_hex": "0078ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+        "finalized_hex": "000000408502b3b73f34000000200078ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff7744",
+        "crc16_le_hex": "7744",
+        "repeats": 3,
+        "inter_repeat_gap_us": 2000
+      },
+      {
+        "name": "pricehax-raw-data-0121.bin",
+        "command": "0x20",
+        "frame_length": 58,
+        "payload_hex": "0079ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+        "finalized_hex": "000000408502b3b73f34000000200079ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffa0da",
+        "crc16_le_hex": "a0da",
+        "repeats": 3,
+        "inter_repeat_gap_us": 2000
+      },
+      {
+        "name": "pricehax-raw-data-0122.bin",
+        "command": "0x20",
+        "frame_length": 58,
+        "payload_hex": "007affffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+        "finalized_hex": "000000408502b3b73f3400000020007affffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffc871",
+        "crc16_le_hex": "c871",
+        "repeats": 3,
+        "inter_repeat_gap_us": 2000
+      },
+      {
+        "name": "pricehax-raw-data-0123.bin",
+        "command": "0x20",
+        "frame_length": 58,
+        "payload_hex": "007bffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+        "finalized_hex": "000000408502b3b73f3400000020007bffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff1fef",
+        "crc16_le_hex": "1fef",
+        "repeats": 3,
+        "inter_repeat_gap_us": 2000
+      },
+      {
+        "name": "pricehax-raw-data-0124.bin",
+        "command": "0x20",
+        "frame_length": 58,
+        "payload_hex": "007cffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+        "finalized_hex": "000000408502b3b73f3400000020007cffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff092f",
+        "crc16_le_hex": "092f",
+        "repeats": 3,
+        "inter_repeat_gap_us": 2000
+      },
+      {
+        "name": "pricehax-raw-data-0125.bin",
+        "command": "0x20",
+        "frame_length": 58,
+        "payload_hex": "007dffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+        "finalized_hex": "000000408502b3b73f3400000020007dffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffdeb1",
+        "crc16_le_hex": "deb1",
+        "repeats": 3,
+        "inter_repeat_gap_us": 2000
+      },
+      {
+        "name": "pricehax-raw-data-0126.bin",
+        "command": "0x20",
+        "frame_length": 58,
+        "payload_hex": "007effffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+        "finalized_hex": "000000408502b3b73f3400000020007effffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffb61a",
+        "crc16_le_hex": "b61a",
+        "repeats": 3,
+        "inter_repeat_gap_us": 2000
+      },
+      {
+        "name": "pricehax-raw-data-0127.bin",
+        "command": "0x20",
+        "frame_length": 58,
+        "payload_hex": "007fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+        "finalized_hex": "000000408502b3b73f3400000020007fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff6184",
+        "crc16_le_hex": "6184",
+        "repeats": 3,
+        "inter_repeat_gap_us": 2000
+      },
+      {
+        "name": "pricehax-raw-data-0128.bin",
+        "command": "0x20",
+        "frame_length": 58,
+        "payload_hex": "0080ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+        "finalized_hex": "000000408502b3b73f34000000200080ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff3af4",
+        "crc16_le_hex": "3af4",
+        "repeats": 3,
+        "inter_repeat_gap_us": 2000
+      },
+      {
+        "name": "pricehax-raw-data-0129.bin",
+        "command": "0x20",
+        "frame_length": 58,
+        "payload_hex": "0081ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+        "finalized_hex": "000000408502b3b73f34000000200081ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffed6a",
+        "crc16_le_hex": "ed6a",
+        "repeats": 3,
+        "inter_repeat_gap_us": 2000
+      },
+      {
+        "name": "pricehax-raw-data-0130.bin",
+        "command": "0x20",
+        "frame_length": 58,
+        "payload_hex": "0082ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+        "finalized_hex": "000000408502b3b73f34000000200082ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff85c1",
+        "crc16_le_hex": "85c1",
+        "repeats": 3,
+        "inter_repeat_gap_us": 2000
+      },
+      {
+        "name": "pricehax-raw-data-0131.bin",
+        "command": "0x20",
+        "frame_length": 58,
+        "payload_hex": "0083ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+        "finalized_hex": "000000408502b3b73f34000000200083ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff525f",
+        "crc16_le_hex": "525f",
+        "repeats": 3,
+        "inter_repeat_gap_us": 2000
+      },
+      {
+        "name": "pricehax-raw-data-0132.bin",
+        "command": "0x20",
+        "frame_length": 58,
+        "payload_hex": "0084ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+        "finalized_hex": "000000408502b3b73f34000000200084ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff449f",
+        "crc16_le_hex": "449f",
+        "repeats": 3,
+        "inter_repeat_gap_us": 2000
+      },
+      {
+        "name": "pricehax-raw-data-0133.bin",
+        "command": "0x20",
+        "frame_length": 58,
+        "payload_hex": "0085ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+        "finalized_hex": "000000408502b3b73f34000000200085ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff9301",
+        "crc16_le_hex": "9301",
+        "repeats": 3,
+        "inter_repeat_gap_us": 2000
+      },
+      {
+        "name": "pricehax-raw-data-0134.bin",
+        "command": "0x20",
+        "frame_length": 58,
+        "payload_hex": "0086ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+        "finalized_hex": "000000408502b3b73f34000000200086fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffbaa",
+        "crc16_le_hex": "fbaa",
+        "repeats": 3,
+        "inter_repeat_gap_us": 2000
+      },
+      {
+        "name": "pricehax-raw-data-0135.bin",
+        "command": "0x20",
+        "frame_length": 58,
+        "payload_hex": "0087ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+        "finalized_hex": "000000408502b3b73f34000000200087ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff2c34",
+        "crc16_le_hex": "2c34",
+        "repeats": 3,
+        "inter_repeat_gap_us": 2000
+      },
+      {
+        "name": "pricehax-raw-data-0136.bin",
+        "command": "0x20",
+        "frame_length": 58,
+        "payload_hex": "0088ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+        "finalized_hex": "000000408502b3b73f34000000200088ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffc622",
+        "crc16_le_hex": "c622",
+        "repeats": 3,
+        "inter_repeat_gap_us": 2000
+      },
+      {
+        "name": "pricehax-raw-data-0137.bin",
+        "command": "0x20",
+        "frame_length": 58,
+        "payload_hex": "0089ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+        "finalized_hex": "000000408502b3b73f34000000200089ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff11bc",
+        "crc16_le_hex": "11bc",
+        "repeats": 3,
+        "inter_repeat_gap_us": 2000
+      },
+      {
+        "name": "pricehax-raw-data-0138.bin",
+        "command": "0x20",
+        "frame_length": 58,
+        "payload_hex": "008affffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+        "finalized_hex": "000000408502b3b73f3400000020008affffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff7917",
+        "crc16_le_hex": "7917",
+        "repeats": 3,
+        "inter_repeat_gap_us": 2000
+      },
+      {
+        "name": "pricehax-raw-data-0139.bin",
+        "command": "0x20",
+        "frame_length": 58,
+        "payload_hex": "008bffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+        "finalized_hex": "000000408502b3b73f3400000020008bffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffae89",
+        "crc16_le_hex": "ae89",
+        "repeats": 3,
+        "inter_repeat_gap_us": 2000
+      },
+      {
+        "name": "pricehax-raw-data-0140.bin",
+        "command": "0x20",
+        "frame_length": 58,
+        "payload_hex": "008cffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+        "finalized_hex": "000000408502b3b73f3400000020008cffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffb849",
+        "crc16_le_hex": "b849",
+        "repeats": 3,
+        "inter_repeat_gap_us": 2000
+      },
+      {
+        "name": "pricehax-raw-data-0141.bin",
+        "command": "0x20",
+        "frame_length": 58,
+        "payload_hex": "008dffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+        "finalized_hex": "000000408502b3b73f3400000020008dffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff6fd7",
+        "crc16_le_hex": "6fd7",
+        "repeats": 3,
+        "inter_repeat_gap_us": 2000
+      },
+      {
+        "name": "pricehax-raw-data-0142.bin",
+        "command": "0x20",
+        "frame_length": 58,
+        "payload_hex": "008effffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+        "finalized_hex": "000000408502b3b73f3400000020008effffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff077c",
+        "crc16_le_hex": "077c",
+        "repeats": 3,
+        "inter_repeat_gap_us": 2000
+      },
+      {
+        "name": "pricehax-raw-data-0143.bin",
+        "command": "0x20",
+        "frame_length": 58,
+        "payload_hex": "008fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+        "finalized_hex": "000000408502b3b73f3400000020008fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffd0e2",
+        "crc16_le_hex": "d0e2",
+        "repeats": 3,
+        "inter_repeat_gap_us": 2000
+      },
+      {
+        "name": "pricehax-raw-data-0144.bin",
+        "command": "0x20",
+        "frame_length": 58,
+        "payload_hex": "0090ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+        "finalized_hex": "000000408502b3b73f34000000200090ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffd351",
+        "crc16_le_hex": "d351",
+        "repeats": 3,
+        "inter_repeat_gap_us": 2000
+      },
+      {
+        "name": "pricehax-raw-data-0145.bin",
+        "command": "0x20",
+        "frame_length": 58,
+        "payload_hex": "0091ffffffffffffffffffffffffffffffffffffffffffffffff00000000000000000000000000000000",
+        "finalized_hex": "000000408502b3b73f34000000200091ffffffffffffffffffffffffffffffffffffffffffffffff00000000000000000000000000000000044d",
+        "crc16_le_hex": "044d",
         "repeats": 3,
         "inter_repeat_gap_us": 2000
       },

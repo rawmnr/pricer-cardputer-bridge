@@ -1,6 +1,5 @@
 #pragma once
 
-#include <array>
 #include <cstddef>
 #include <cstdint>
 
@@ -27,7 +26,7 @@ struct OrientationTestFrame {
 };
 
 struct OrientationTestPlan {
-    std::array<OrientationTestFrame, 5> frames;
+    const OrientationTestFrame* frames;
     std::size_t frame_count;
 };
 
