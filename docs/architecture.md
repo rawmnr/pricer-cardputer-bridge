@@ -50,7 +50,7 @@ Responsibilities:
 - advertise firmware/protocol capabilities;
 - validate framed USB commands and CRCs;
 - enforce safety limits;
-- translate a validated PP16 request into RMT symbols;
+- translate a validated PP4 or PP16 request into RMT symbols;
 - drive GPIO 44;
 - report completion or a precise failure code;
 - display minimal connection and transmission state;
@@ -109,7 +109,7 @@ USB bridge message + CRC32
 firmware parser and bounds validation
    |
    v
-PP16 encoder -> RMT symbols
+PP4/PP16 encoder -> RMT symbols
    |
    v
 GPIO 44 -> built-in IR LED -> ESL receiver

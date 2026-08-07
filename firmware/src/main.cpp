@@ -65,7 +65,7 @@ void handle_message(const eslbridge::protocol::MessageView& message) {
             payload[1] = eslbridge::config::kFirmwareVersionMajor;
             payload[2] = eslbridge::config::kFirmwareVersionMinor;
             payload[3] = eslbridge::config::kFirmwareVersionPatch;
-            const std::uint32_t capabilities = (1U << 0U) | (1U << 2U) | (1U << 3U);
+            const std::uint32_t capabilities = (1U << 0U) | (1U << 1U) | (1U << 2U) | (1U << 3U);
             eslbridge::protocol::write_u32_le(payload.data() + 4, capabilities);
             eslbridge::protocol::write_u16_le(
                 payload.data() + 8,
