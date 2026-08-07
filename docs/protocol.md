@@ -4,7 +4,9 @@ This protocol transports commands between the Windows host and the Cardputer. It
 
 ## Byte order
 
-All multi-byte integers are unsigned little-endian.
+USB bridge framing integers are unsigned little-endian. Direct Pricer AirFrame
+image fields and packet indices are big-endian by profile definition; AirFrame
+CRC16 trailers are little-endian.
 
 ## Frame
 
@@ -49,7 +51,7 @@ Extended HELLO payloads may append a 17-byte build identity suffix (total 29 byt
 | 12 | 1 | identity_version | `0x01` for the build identity layout |
 | 13 | 7 | git_sha | ASCII Git short SHA, or `unknown` when unavailable |
 | 20 | 1 | build_provenance | `0` unknown, `1` clean local, `2` dirty local, `3` CI |
-| 21 | 8 | pp16_profile_revision | ASCII waveform/vector profile identifier, currently `T008E-r1` |
+| 21 | 8 | pp16_profile_revision | ASCII waveform/vector profile identifier, currently `T008F-r1` |
 
 Hosts must continue accepting the original 12-byte HELLO payload. New hosts parse
 the suffix when present and display the exact firmware identity.
@@ -204,65 +206,56 @@ table in microseconds:
 4. An optional preamble may be configured for future profiles; the terminal burst
    remains mandatory and is always the final RMT item.
 
-### PrecIR Interoperability Adapter & Frame Finalization
+### PrecIR compatibility adapter and direct AirFrames
 
-The Python host library provides a clean-room PrecIR adapter module (`eslbridge.precir`) for formatting raw Pricer PP16 frames matching PrecIR driver conventions (`tools_python/pr.py`):
+The Python host library retains a clean-room PrecIR adapter for historical
+vectors. Its pinned source is PrecIR commit
+`b09951e2b3d2741e4ca08f929eafef849f6fc006` (`tools_python/pr.py`), under
+GPL-3.0. Historical dongle framing may include the four-byte metadata marker
+`00 00 00 40` (`PRECIR_PP16_HEADER`), but that marker is **not on-air ESL
+protocol data**.
 
-1. **Header & Frame Layout**:
-   - PP16 header prefix: 4 bytes `b"\x00\x00\x00\x40"` (`PRECIR_PP16_HEADER`).
-   - PP4 has no extra header prefix (`PRECIR_PP4_HEADER = b""`).
-   - Variable raw payload bytes.
-   - 16-bit little-endian trailer CRC16 (`calculate_precir_crc16`).
-
-2. **CRC16 Algorithm**:
-   - Polynomial: $0x8408$ (reflected $0x1021$).
-   - Initial value: $0x8408$.
-   - Calculated over raw payload bytes **before** prepending the 4-byte header prefix.
-
-3. **Repeat Metadata Separation**:
-   - Frame finalization (`finalize_precir_frame`) outputs raw Pricer frame bytes (`1..256` bytes).
-   - Transmission metadata (`repeats` count in `1..400` and `inter_repeat_gap_us` in `0..1,000,000`) is passed in the host bridge request envelope (`PricerFrameRequest`) and is **never embedded inside raw frame payload bytes**.
-
-4. **Provenance & Licensing**:
-   - Derived from published PrecIR prior art commit `b09951e2b3d2741e4ca08f929eafef849f6fc006` (`tools_python/pr.py`, GPL-3.0).
-   - Clean-room implementation: no PrecIR source code was copied or vendored into this repository.
-
-### Pricer application frame construction
-
-The clean-room host adapter derives the target PLID from barcode
-`N4163114582613272` using the pinned PrecIR field formula:
-
-- internal PLID bytes: `3F B7 B3 02`;
-- wire PLID bytes: `02 B3 B7 3F`.
-
-The wire order is used in every finalized frame after the PP16 header and
-protocol byte. `make_raw_frame()` builds a raw command as:
+The direct RMT path uses AirFrame bytes and never prepends
+`00 00 00 40`. A direct AirFrame is:
 
 ```text
-85 [02 B3 B7 3F] [COMMAND] [BODY] [CRC16 little-endian]
+85 [PLID] [command/envelope/body] [CRC16 little-endian]
 ```
 
-`make_mcu_frame()` builds graphic image commands as:
+Graphic MCU commands retain their on-air subcommand envelope:
+`85 [PLID] 34 00 00 00 [COMMAND] [BODY] [CRC16 little-endian]`. The
+`34 00 00 00` bytes are protocol data; the separate `00 00 00 40` marker is
+legacy dongle metadata. The direct builders reject the latter marker, and
+legacy vectors are retained only under explicitly named compatibility entries.
 
-```text
-85 [02 B3 B7 3F] 34 00 00 00 [COMMAND] [BODY] [CRC16 little-endian]
-```
+CRC16 uses polynomial `0x8408`, initial value `0x8408`, and covers the direct
+payload before the two-byte little-endian trailer. Transmission metadata
+(repeat count and inter-repeat gap) stays in `PricerFrameRequest` and is never
+embedded in raw frame bytes.
 
-The retained PrecIR control uses wake command `0x17`, a partial 8 × 8 image,
-page 1, and 20-byte packets. Its vectors remain unchanged from `T008C-r1`.
+### TagTinker type-1327 direct profile
 
-The `T008E-r1` application identity provides a PricehaxBT type-1327 profile
-derived from pinned commit
-`3043f964595f90fdb6835640275751277523f809`: wake command `0x97` with 20
-filler bytes and 500 total repetitions; full-screen 208 × 112 two-plane image;
-page 2; 40-byte indexed data packets; 10 parameter repetitions; 3 data
-repetitions; and 50 refresh repetitions with an 18-byte body. Compressed mode
-reproduces the upstream terminal-run behavior (`80 00 B5 FF`) and announces
-the padded group length of 40 bytes. The raw diagnostic mode announces 5,824
-bytes and pads transport to 5,840 bytes in 146 packets. A page-1 variant
-isolates page selection. These application profiles do not change the
-provisional PP16 physical timing. Negative `T008D-r1` physical results are
-invalid because that revision announced 4 compressed bytes while sending 40.
+The deterministic T008F profile is derived from the clean-room transcription
+of TagTinker's published `protocol/tagtinker_proto.c` and targets barcode
+`N4163114582613272`:
+
+- type code `1327`, wire PLID `02 B3 B7 3F`;
+- page `0`, dimensions `208 x 112`;
+- two MSB-first bitplanes, `2,912` bytes each;
+- raw image length `5,824` bytes, zero-padded to `5,840`;
+- indexed `20`-byte data packets, `292` packets;
+- image fields and packet indices are big-endian; CRC16 is little-endian;
+- ping is exactly `32` bytes;
+- physical repeat metadata is ping `81`, params `16`, data `3`, refresh `21`,
+  all with a `500 us` inter-repeat gap.
+
+The generated vectors are software golden data only. They do not establish
+carrier, optical, tag, or physical interoperability. PP4 and RLE are outside
+this profile.
+
+The historical T008E PricehaxBT profile remains available as explicitly
+non-primary compatibility data. It must not be treated as the direct
+TagTinker path and does not change the provisional PP16 physical timing.
 
 ### Physical Validation Limitations
 

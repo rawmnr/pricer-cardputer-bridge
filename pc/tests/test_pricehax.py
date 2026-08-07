@@ -144,7 +144,8 @@ def test_manifest_retains_lengths_crc_and_repeat_metadata() -> None:
     manifest = json.loads((root / "tests" / "vectors" / "manifest.json").read_text())
     profile = manifest["pricehax_1327"]
 
-    assert manifest["profile_revision"] == "T008E-r1"
+    assert manifest["profile_revision"] == "T008F-r1"
+    assert manifest["legacy_profile_revision"] == "T008E-r1"
     assert profile["image"] == {
         "description": "full-screen all-white, upstream-exact compressed two planes",
         "width": 208,

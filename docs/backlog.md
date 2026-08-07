@@ -3,10 +3,15 @@
 ## Dependency graph
 
 ```text
-T001 -> T001A -> T002 -> T003
-                  |       |
-                  +-----> T004 -> T005 -> T006 -> T007 -> T008 -> T009 -> T010
+T004
+  |
+  +--> T006C (#20) --+
+  |                  |
+  +--> T008F (#21) --+--> T005 (#5) --> T009 (#9) --> T010 (#10)
 ```
+
+T006/T006B PP16 work remains completed historical/experimental
+infrastructure. PP16 is not a prerequisite for first interoperability.
 
 ## T001 - Reproducible toolchain, CI, and application artifact
 
@@ -94,6 +99,20 @@ Acceptance:
 - local completion and timeout are distinct;
 - complete transfer metadata is logged.
 
+## T008F - Direct AirFrame and TagTinker type-1327 profile
+
+Acceptance:
+
+- direct RMT AirFrames never contain the legacy `00 00 00 40` dongle marker;
+- historical PrecIR/Pricehax vectors remain explicitly non-primary compatibility data;
+- barcode `N4163114582613272` maps to wire PLID `02 B3 B7 3F`;
+- deterministic page-0, 208 x 112, two-plane profile emits 5,824 raw and
+  5,840 padded bytes as 292 indexed 20-byte packets;
+- image fields and indices are big-endian, CRC16 trailers little-endian;
+- ping golden bytes, packetization, blank accent plane, repeat metadata, and
+  builder determinism are covered by host tests;
+- no PP4/RLE implementation or physical compatibility claim is introduced.
+
 ## T008 - PrecIR interoperability adapter and audit
 
 Acceptance:
@@ -101,9 +120,9 @@ Acceptance:
 - exact PrecIR commit is pinned;
 - license/provenance review is recorded;
 - adapter can consume generated PrecIR frames or a clean equivalent;
-- golden-vector tests preserve frame bytes;
+- historical vectors are explicitly labeled compatibility data;
+- golden-vector tests preserve historical frame bytes;
 - no unsupported claim of ESL compatibility is made.
-
 ## T009 - Monochrome image transfer
 
 Acceptance:

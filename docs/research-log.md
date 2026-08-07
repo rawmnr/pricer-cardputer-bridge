@@ -39,8 +39,18 @@ Source: https://github.com/furrtek/PrecIR
 
 Full report saved at [`docs/research/2026-08-04-pricer-pp16-protocol-analysis.md`](research/2026-08-04-pricer-pp16-protocol-analysis.md).
 
-### Key Findings:
-1. **MCU Subcommand Envelope Prefix Defect:** Stripping `0x34 0x00 0x00 0x00` in bench retest `T007` caused graphic ESL MCU image frames (`0x05`, `0x20`, `0x01`) to be dropped by the target tag. PrecIR source inspection (`tools_python/pr.py`) confirms `make_mcu_frame` requires `0x85 [PLID] 34 00 00 00 [CMD]`.
-2. **Target Model & Barcode PLID:** Marking `#19523-01` is a Pricer SmartTAG HD M+ Red ($208 \times 112$ pixels = 23,296 pixels at 110 DPI). Barcode `N4163114582613272` maps to 32-bit PLID `0x3FB7B302`, placed on the wire as bytes `[0x02, 0xB3, 0xB7, 0x3F]` (little-endian SSSSS followed by little-endian MMYWW).
-3. **Tricolor Dual-Bitplane Requirement:** The 3-color label requires two bitplane blocks (2,912-byte Black/White plane + 2,912-byte Red mask plane = 5,824 bytes total uncompressed).
-4. **Wake-up Duration:** Wake-up frame (`cmd 0x17`) must be transmitted continuously in a loop for up to 4 seconds before sending image frames.
+### Historical findings (compatibility context)
+1. The on-air graphic MCU envelope is `34 00 00 00` after the wire PLID and
+   before commands `0x05`, `0x20`, and `0x01`.
+2. PrecIR's `00 00 00 40` marker belongs to its legacy dongle transport and is
+   not direct AirFrame data. It must not be emitted by direct RMT.
+3. Barcode `N4163114582613272` maps to wire PLID
+   `[0x02, 0xB3, 0xB7, 0x3F]`.
+
+### T008F software profile
+The TagTinker type-1327 profile uses two `208 x 112` MSB-first planes
+(`5,824` raw bytes, `5,840` padded), `292` indexed `20`-byte packets, page `0`,
+and little-endian CRC16 trailers. Its deterministic metadata is
+ping/params/data/refresh repeats `81/16/3/21` with a `500 us` gap. These
+vectors remain unverified software artifacts; they make no physical
+compatibility claim and do not implement PP4 or RLE.

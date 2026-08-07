@@ -257,15 +257,14 @@ def test_corrected_vectors_match_manifest_binaries_crc_and_frame_shape() -> None
 
     root = Path(__file__).parents[2]
     manifest = json.loads((root / "tests" / "vectors" / "manifest.json").read_text())
-    entries = {entry["name"]: entry for entry in manifest["vectors"]}
-
     assert manifest["target"]["barcode"] == TARGET_BARCODE
     assert manifest["target"]["plid_formula_result"] == "02b3b73f"
     assert manifest["target"]["raw_frame_plid_order"] == "02b3b73f"
+    entries = {entry["name"]: entry for entry in manifest["vectors"]}
     for name, expected_hex in CORRECTED_VECTORS.items():
-        entry = entries[name]
+        entry = entries[f"legacy-precir-{name}"]
         frame = bytes.fromhex(expected_hex)
-        assert (root / "tests" / "vectors" / name).read_bytes() == frame
+        assert (root / "tests" / "vectors" / f"legacy-precir-{name}").read_bytes() == frame
         assert entry["finalized_hex"] == expected_hex
         assert frame[-2:].hex() == entry["crc16_le_hex"]
         assert frame[5:9] == TARGET_PLID.wire
@@ -287,24 +286,18 @@ def test_corrected_parameter_vector_has_raw_page_one_fields() -> None:
     assert command_payload[7:9] == b"\x00\x08"
 
 
-def test_embedded_orientation_vectors_match_retained_binaries() -> None:
+def test_embedded_orientation_vectors_are_direct_airframes() -> None:
     import re
     from pathlib import Path
 
     root = Path(__file__).parents[2]
     source = (root / "firmware" / "src" / "orientation_test.cpp").read_text()
-    symbols = {
-        "wake.bin": "PrecirWake",
-        "params-8x8-color.bin": "PrecirParams",
-        "data-8x8-color.bin": "PrecirData",
-        "refresh.bin": "PrecirRefresh",
-    }
-    for name, symbol in symbols.items():
-        match = re.search(
-            rf"constexpr std::uint8_t k{symbol}Frame\[\] = \{{(.*?)\n\}};",
-            source,
-            flags=re.DOTALL,
-        )
-        assert match is not None
-        embedded = bytes(int(token, 16) for token in re.findall(r"0x([0-9A-F]{2})", match.group(1)))
-        assert embedded == bytes.fromhex(CORRECTED_VECTORS[name])
+    match = re.search(
+        r"constexpr std::uint8_t kTagTinker1327Frame0000\[\] = \{(.*?)\n\};",
+        source,
+        flags=re.DOTALL,
+    )
+    assert match is not None
+    embedded = bytes(int(token, 16) for token in re.findall(r"0x([0-9A-F]{2})", match.group(1)))
+    assert embedded.hex() == ("8502b3b73f97010000000101010101010101010101010101010101010101402c")
+    assert b"\x00\x00\x00\x40" not in embedded[:4]

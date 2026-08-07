@@ -56,26 +56,26 @@ Use the application-only `firmware.bin`. Do not distribute a full flash dump or 
 
 ## Cardputer keyboard orientation tests
 
-The running application includes a local, PC-free minimal ESL test sequence.
-After aligning the built-in IR emitter with the target, press one of the
-number keys:
+The running application includes a local, PC-free finite TagTinker type-1327
+test sequence. After aligning the built-in IR emitter with the target, press
+one of the number keys. Each key selects the same direct AirFrame profile:
 
 | Key | Action |
 |---|---|
-| `1` | `PRECIR_CONTROL`: retained T008C wake `0x17`, page 1, partial 8 × 8 image |
-| `2` | `PRICEHAX_EXACT`: upstream-exact compressed type-1327 profile, wake `0x97`, page 2 |
-| `3` | `PRICEHAX_RAW`: uncompressed full-screen 208 × 112 diagnostic profile |
-| `4` | `PRICEHAX_PAGE1`: key 2 with page 1 |
+| `1` | `TAGTINKER_1327` compatibility slot 1 |
+| `2` | `TAGTINKER_1327` compatibility slot 2 |
+| `3` | `TAGTINKER_1327` compatibility slot 3 |
+| `4` | `TAGTINKER_1327` compatibility slot 4 |
 
-The Pricehax plans split the 500-repeat wake into two bounded 250-repeat
-transmissions separated by the same 2 ms repeat gap. Parameters repeat 10
-times, each 40-byte data frame repeats 3 times, and refresh repeats 50 times.
-The compressed profile reproduces the pinned upstream terminal-run behavior,
-announces its padded 40-byte group, and sends one packet. The raw profile
-announces 5,824 bytes and pads transport to 5,840 bytes across 146 packets.
-All four tests remain finite and do not enable continuous carrier output.
-Local completion does not prove IR emission or ESL compatibility; record the
-selected profile, distance, alignment, ambient light, and visible response.
+The profile targets barcode `N4163114582613272`, sends page 0 at 208 x 112
+with two MSB-first planes, and uses direct AirFrame bytes. It sends a ping,
+parameters, 292 indexed 20-byte data packets, and refresh. Repeat metadata is
+81/16/3/21 with a 500 us gap. The legacy `00 00 00 40` dongle marker is never
+prepended by this direct path.
+
+Historical PrecIR and PricehaxBT profiles remain available only as explicitly
+named non-primary compatibility vectors. No PP4/RLE implementation or physical
+ESL compatibility claim is made.
 
 ## Why this split
 
