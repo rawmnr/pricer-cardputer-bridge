@@ -25,14 +25,8 @@ struct CarrierTicks {
 };
 
 CarrierTicks carrier_ticks(const std::uint32_t frequency_hz, const std::uint8_t duty_percent) {
-    const auto period = std::max<std::uint32_t>(
-        2U, (kApbClockHz + (frequency_hz / 2U)) / frequency_hz);
-    const auto high = std::clamp<std::uint32_t>(
-        (period * duty_percent + 50U) / 100U, 1U, period - 1U);
-    return {
-        static_cast<std::uint16_t>(high),
-        static_cast<std::uint16_t>(period - high),
-    };
+    const auto plan = detail::make_carrier_plan(frequency_hz, duty_percent);
+    return {plan.high_ticks, plan.low_ticks};
 }
 
 }  // namespace
@@ -137,46 +131,87 @@ protocol::Status IrTransmitter::send_pricer_frame(
             modulation, repeats, inter_repeat_gap_us, frame_length)) {
         return protocol::Status::kInvalidArgument;
     }
-    if (modulation == config::kModulationPp4) {
-        return protocol::Status::kNotImplemented;
-    }
 
     state_ = protocol::TransmitterState::kBusy;
 
-    const auto profile = pp16::make_provisional_profile();
-    const auto enc_res = pp16::encode_frame(frame_data, frame_length, profile, encoded_frame_);
-    if (enc_res != pp16::Status::kOk) {
-        state_ = protocol::TransmitterState::kIdle;
-        return protocol::Status::kInvalidArgument;
-    }
+    rmt_item32_t* tx_items = nullptr;
+    std::size_t tx_item_count = 0;
+    std::uint32_t frame_duration_us = 0;
+    std::uint32_t requested_carrier_hz = 0;
+    std::uint8_t duty_percent = 0;
 
-    for (std::size_t i = 0; i < encoded_frame_.symbol_count; ++i) {
-        pp16::RmtPhaseTicks ticks{};
-        if (pp16::convert_symbol_to_ticks(encoded_frame_.symbols[i], ticks) != pp16::Status::kOk) {
+    if (modulation == config::kModulationPp4) {
+        const auto profile = pp4::make_tagtinker_profile();
+        const auto enc_res = pp4::encode_frame(
+            frame_data, frame_length, profile, encoded_pp4_frame_);
+        if (enc_res != pp4::Status::kOk) {
             state_ = protocol::TransmitterState::kIdle;
             return protocol::Status::kInvalidArgument;
         }
-        rmt_items_[i].level0 = 1;
-        rmt_items_[i].duration0 = ticks.high_ticks;
-        rmt_items_[i].level1 = 0;
-        rmt_items_[i].duration1 = ticks.low_ticks;
+
+        for (std::size_t i = 0; i < encoded_pp4_frame_.symbol_count; ++i) {
+            pp4::RmtPhaseTicks ticks{};
+            if (pp4::convert_symbol_to_ticks(encoded_pp4_frame_.symbols[i], ticks) !=
+                pp4::Status::kOk) {
+                state_ = protocol::TransmitterState::kIdle;
+                return protocol::Status::kInvalidArgument;
+            }
+            pp4_rmt_items_[i].level0 = 1;
+            pp4_rmt_items_[i].duration0 = ticks.high_ticks;
+            pp4_rmt_items_[i].level1 = 0;
+            pp4_rmt_items_[i].duration1 = ticks.low_ticks;
+        }
+        tx_items = pp4_rmt_items_.data();
+        tx_item_count = encoded_pp4_frame_.symbol_count;
+        frame_duration_us = encoded_pp4_frame_.total_duration_us;
+        requested_carrier_hz = profile.carrier_frequency_hz;
+        duty_percent = profile.duty_percent;
+    } else {
+        const auto profile = pp16::make_provisional_profile();
+        const auto enc_res = pp16::encode_frame(frame_data, frame_length, profile, encoded_frame_);
+        if (enc_res != pp16::Status::kOk) {
+            state_ = protocol::TransmitterState::kIdle;
+            return protocol::Status::kInvalidArgument;
+        }
+
+        for (std::size_t i = 0; i < encoded_frame_.symbol_count; ++i) {
+            pp16::RmtPhaseTicks ticks{};
+            if (pp16::convert_symbol_to_ticks(encoded_frame_.symbols[i], ticks) !=
+                pp16::Status::kOk) {
+                state_ = protocol::TransmitterState::kIdle;
+                return protocol::Status::kInvalidArgument;
+            }
+            rmt_items_[i].level0 = 1;
+            rmt_items_[i].duration0 = ticks.high_ticks;
+            rmt_items_[i].level1 = 0;
+            rmt_items_[i].duration1 = ticks.low_ticks;
+        }
+        tx_items = rmt_items_.data();
+        tx_item_count = encoded_frame_.symbol_count;
+        frame_duration_us = encoded_frame_.total_duration_us;
+        requested_carrier_hz = pp16::kPrecirCarrierHz;
+        duty_percent = 50;
     }
 
-    const auto carrier = carrier_ticks(pp16::kPrecirCarrierHz, 50);
+    const auto carrier = detail::make_carrier_plan(requested_carrier_hz, duty_percent);
     if (rmt_set_tx_carrier(
-            kRmtChannel, true, carrier.high, carrier.low, RMT_CARRIER_LEVEL_HIGH) != ESP_OK) {
+            kRmtChannel,
+            true,
+            carrier.high_ticks,
+            carrier.low_ticks,
+            RMT_CARRIER_LEVEL_HIGH) != ESP_OK) {
         state_ = protocol::TransmitterState::kFault;
         return protocol::Status::kHardwareError;
     }
 
-    const std::uint32_t frame_duration_ms = (encoded_frame_.total_duration_us + 999U) / 1000U;
+    const std::uint32_t frame_duration_ms = (frame_duration_us + 999U) / 1000U;
     const TickType_t wait_ticks = pdMS_TO_TICKS(frame_duration_ms + kSchedulingMarginMs);
 
     for (std::uint16_t rep = 0; rep < repeats; ++rep) {
         const auto write_err = rmt_write_items(
             kRmtChannel,
-            rmt_items_.data(),
-            static_cast<int>(encoded_frame_.symbol_count),
+            tx_items,
+            static_cast<int>(tx_item_count),
             false);
         if (write_err != ESP_OK) {
             state_ = protocol::TransmitterState::kFault;

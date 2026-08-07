@@ -113,13 +113,22 @@ void test_valid_pricer_frame_request_boundaries(void) {
     TEST_ASSERT_FALSE(valid_pricer_frame_request(16, 1, 0, 257));
 }
 
+void test_carrier_plan_exposes_quantization(void) {
+    const auto plan = make_carrier_plan(1254902, 50);
+    TEST_ASSERT_EQUAL_UINT32(1254902, plan.requested_hz);
+    TEST_ASSERT_EQUAL_UINT32(1250000, plan.effective_hz);
+    TEST_ASSERT_EQUAL_UINT16(32, plan.high_ticks);
+    TEST_ASSERT_EQUAL_UINT16(32, plan.low_ticks);
+}
+
+
 void run_all_tests(void) {
     UNITY_BEGIN();
     RUN_TEST(test_valid_carrier_request_accepted_min_max);
     RUN_TEST(test_valid_carrier_request_invalid_boundaries);
     RUN_TEST(test_carrier_burst_plan_exact_totals);
     RUN_TEST(test_carrier_burst_plan_max_phase_width);
-    RUN_TEST(test_carrier_burst_plan_uninterrupted_high_phases_when_split);
+    RUN_TEST(test_carrier_plan_exposes_quantization);
     RUN_TEST(test_valid_pricer_frame_request_boundaries);
     UNITY_END();
 }

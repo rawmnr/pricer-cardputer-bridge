@@ -28,7 +28,7 @@ Primary source: M5Stack Cardputer-Adv product documentation and schematics.
 
 - Tag family: SmartTAG HD M+ Red.
 - Resolution: 208 x 112 pixels.
-- Communication: Pricer PP16 over near-IR carrier close to 1.245 MHz.
+- Communication: Pricer PP4 or PP16 over near-IR carrier near 1.245–1.255 MHz.
 - The front black optical window contains the Pricer receiver.
 - The Cardputer's built-in IR stage has adequate bandwidth and optical power at 1-2 cm.
 

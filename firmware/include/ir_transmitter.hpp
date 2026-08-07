@@ -5,6 +5,40 @@
 
 #include "app_config.hpp"
 #include "bridge_protocol.hpp"
+#include "pp4_encoder.hpp"
+
+namespace eslbridge::detail {
+
+struct CarrierPlan {
+    std::uint32_t requested_hz{0};
+    std::uint32_t effective_hz{0};
+    std::uint16_t high_ticks{0};
+    std::uint16_t low_ticks{0};
+};
+
+constexpr CarrierPlan make_carrier_plan(
+    const std::uint32_t requested_hz,
+    const std::uint8_t duty_percent) {
+    if (requested_hz == 0) {
+        return CarrierPlan{};
+    }
+    const auto period_ticks = (pp4::kApbClockHz + (requested_hz / 2U)) / requested_hz;
+    const auto bounded_period_ticks = period_ticks < 2U ? 2U : period_ticks;
+    const auto high_ticks = (bounded_period_ticks * duty_percent + 50U) / 100U;
+    const auto bounded_high_ticks =
+        high_ticks < 1U
+            ? 1U
+            : (high_ticks >= bounded_period_ticks ? bounded_period_ticks - 1U : high_ticks);
+    return CarrierPlan{
+        requested_hz,
+        pp4::kApbClockHz / bounded_period_ticks,
+        static_cast<std::uint16_t>(bounded_high_ticks),
+        static_cast<std::uint16_t>(bounded_period_ticks - bounded_high_ticks),
+    };
+}
+
+}  // namespace eslbridge::detail
+
 #include "pp16_encoder.hpp"
 
 #if __has_include(<driver/rmt.h>)
@@ -101,6 +135,8 @@ private:
     protocol::TransmitterState state_{protocol::TransmitterState::kIdle};
     std::uint32_t tx_count_{0};
     bool initialized_{false};
+    pp4::EncodedFrame encoded_pp4_frame_{};
+    std::array<rmt_item32_t, pp4::kMaxSymbolsPerFrame> pp4_rmt_items_{};
     pp16::EncodedFrame encoded_frame_{};
     std::array<rmt_item32_t, pp16::kMaxSymbolsPerFrame> rmt_items_{};
 };

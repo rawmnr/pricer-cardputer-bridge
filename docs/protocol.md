@@ -61,7 +61,7 @@ Capability bits:
 - bit 2: PP16 transmission;
 - bit 3: device display/status UI.
 
-The current implementation advertises bits 0, 2, and 3. PP16 support remains provisional until physical carrier and target-ESL validation is complete.
+The current implementation advertises bits 0, 1, 2, and 3 (`0x0000000F`). PP4/PP16 support remains provisional until physical carrier and target-ESL validation is complete.
 
 ### `0x02 GET_STATUS`
 
@@ -110,12 +110,48 @@ The payload length MUST equal `10 + frame_length`. If payload length != `10 + fr
 
 For `modulation = 16` (PP16), transmission is executed through ESP32 RMT using fixed storage (`eslbridge::pp16::encode_frame`) with explicit bounded waits per repeat (`rmt_wait_tx_done`). If transmission wait deadline expires, `TIMEOUT` (`0x0A`) is returned. Continuous RMT loop mode is prohibited.
 
-For `modulation = 4` (PP4), transmission is not yet implemented and returns `NOT_IMPLEMENTED` (`0x09`).
+For `modulation = 4` (PP4), transmission uses the bounded TagTinker raw-symbol profile through ESP32 RMT. Four least-significant 2-bit symbols are emitted per byte, followed by one mandatory terminal carrier burst. The request is rejected if encoding or the bounded RMT transaction cannot be prepared.
 
 Response payload is empty on success (`OK`, `0x00`).
 
 > **PROVISIONAL / INFERRED WARNING:**
 > Transmission of raw PP16 frames is software-integrated and verified against waveform timing models, but remains **untested against physical Pricer ESL target tags in this setup**. No claim of tag or physical carrier compatibility is made.
+
+## PP4 Symbol Encoder
+
+The firmware PP4 encoder is pure, fixed-capacity, and bounded to the bridge's
+accepted raw frame size (`1..256` bytes). Each byte emits four raw 2-bit
+symbols in least-significant-pair-first order:
+
+```text
+symbol0 = byte & 0x03
+symbol1 = (byte >> 2) & 0x03
+symbol2 = (byte >> 4) & 0x03
+symbol3 = (byte >> 6) & 0x03
+```
+
+The TagTinker/PrecIR-derived post-burst gaps are indexed directly by the raw
+symbol value:
+
+| Raw symbol | Post-burst gap (us) |
+|---:|---:|
+| `00` | 61 |
+| `01` | 243 |
+| `10` | 122 |
+| `11` | 182 |
+
+Every data symbol contains an approximately 40 us carrier burst followed by
+its lookup gap. Exactly one approximately 40 us carrier burst with no
+following gap terminates each encoded frame. The maximum 256-byte frame
+therefore occupies 1,025 bounded RMT items and is sent as one contiguous
+transaction per repeat.
+
+The requested TagTinker timer-equivalent carrier is 1,254,902 Hz (64 MHz / 51).
+With the ESP32-S3's 80 MHz APB integer period, the configured RMT carrier uses
+the nearest 64-tick period, which is an effective 1,250,000 Hz at 50% duty.
+Both requested and effective values are exposed by the firmware timing profile
+and deterministic tests. This is a timing-model statement, not a physical
+measurement or ESL compatibility claim.
 
 ## PP16 Symbol Encoder
 
