@@ -58,15 +58,21 @@ This places the 16-bit serial number `SSSSS` in little-endian order (`0x02, 0xB3
 
 ---
 
-## 3. PP16 Framing & MCU Subcommand Envelope Analysis
+## 3. PP16 Framing, AirFrames, and MCU Subcommands
 
-### 3.1 Frame Structure & CRC16
-A complete PP16 frame on the wire consists of:
-1. **PP16 Header Prefix:** 4 bytes `0x00 0x00 0x00 0x40` (`PRECIR_PP16_HEADER`). (Must be prepended before PP16 symbol encoding).
-2. **Payload Bytes:** Protocol byte (`0x85` for graphic tags), 4-byte PLID, MCU command header/data.
-3. **CRC16 Trailer:** 2 bytes, little-endian. Calculated over the payload bytes (from protocol byte `0x85` up to last payload byte) **BEFORE** prepending the 4-byte PP16 header prefix.
-   - **Polynomial:** `0x8408` (reflected `0x1021`).
-   - **Initial Value:** `0x8408`.
+### 3.1 Direct on-air frame structure
+
+A direct PP16 AirFrame sent to the RMT encoder consists of the protocol byte,
+wire PLID, command/envelope/body, and a little-endian CRC16 trailer:
+
+```text
+85 [PLID] [COMMAND/MCU ENVELOPE/BODY] [CRC16 little-endian]
+```
+
+The four bytes `00 00 00 40` observed in the PrecIR dongle path are transport
+metadata for that legacy adapter, not direct on-air ESL bytes. They must not be
+prepended to a direct AirFrame. The MCU subcommand envelope `34 00 00 00`
+remains on-air protocol data for graphic commands.
 
 ### 3.2 Symbol Modulation & Nibble Transmission Order
 - **Post-burst gap:** Each 4-bit nibble ($0\text{..}15$) selects a post-burst gap
@@ -160,8 +166,8 @@ the target ESL.
 | **Pixel Resolution** | $208 \times 112$ pixels (23,296 pixels) | Pricer Specs / `suntown-ukraine.com` | Verified |
 | **PLID Calculation** | `(MMYWW) + (SSSSS << 16)` | PrecIR `tools_python/pr.py:get_plid` | Source Verified |
 | **Barcode PLID (`N4163114582613272`)** | `[0x02, 0xB3, 0xB7, 0x3F]` | Calculated via PrecIR `get_plid` | Verified |
-| **MCU Subcommand Envelope** | `34 00 00 00` required prefix | PrecIR `tools_python/pr.py:make_mcu_frame` | Source Verified |
-| **PP16 Header Prefix** | `0x00 0x00 0x00 0x40` | PrecIR `tools_python/pr.py:terminate_frame` | Source Verified |
+| **MCU Subcommand Envelope** | `34 00 00 00` required on-air envelope | PrecIR `tools_python/pr.py:make_mcu_frame` / TagTinker `protocol/tagtinker_proto.c` | Source Verified |
+| **Legacy PP16 Dongle Marker** | `00 00 00 40`, compatibility metadata only; never direct AirFrame bytes | PrecIR `tools_python/pr.py:terminate_frame` | Historical adapter detail |
 | **CRC16 Specs** | Poly `0x8408`, Init `0x8408`, over payload | PrecIR `tools_python/pr.py:crc16` | Source Verified |
 | **Nibble Order** | Low nibble first (`byte & 0x0F` then `byte >> 4`) | PrecIR `hardware/esl_blaster/FW02/Src/main.c` | Source Verified |
 | **3-Color Image Data Size** | 2 planes ($2,912\text{B B/W} + 2,912\text{B Red} = 5,824\text{B}$) | `furrtek.org/index.php?a=esl` | Source Verified |
@@ -170,9 +176,19 @@ the target ESL.
 
 ---
 
-## 7. Next Steps & Recommendations
+## 7. T008F direct AirFrame profile
 
-1. **Restore MCU Envelope Subcommand Header:** Update host and firmware frame generators to include `0x34 0x00 0x00 0x00` before MCU command bytes (`0x05`, `0x20`, `0x01`).
-2. **Implement Barcode-to-PLID Helper:** Add deterministic barcode parsing to `eslbridge.precir` matching `get_plid` to generate wire PLID bytes `[0x02, 0xB3, 0xB7, 0x3F]` for `N4163114582613272`.
-3. **Format Dual-Bitplane Tricolor Images:** Update image encoders to generate both B/W and Red bitplanes for SmartTAG HD M+ Red labels.
-4. **Enforce 4-Second Continuous Wake-up Sequence:** Ensure the wake-up command is repeated continuously for $\approx 4\text{ seconds}$ before image parameter delivery.
+The T008F host profile follows TagTinker's published type-1327 builders
+without copying source code. It emits direct AirFrames and therefore excludes
+the legacy `00 00 00 40` dongle marker. For barcode
+`N4163114582613272`, the profile uses wire PLID `02 B3 B7 3F`, page `0`,
+two `208 x 112` MSB-first planes, raw length `5,824`, padded length `5,840`,
+and `292` indexed packets of `20` bytes. The generated ping is `32` bytes.
+
+Transmission metadata is intentionally separate from bytes: ping/params/data/
+refresh repeats are `81/16/3/21`, each with a `500 us` gap. CRC16 remains the
+`0x8408` reflected algorithm with a little-endian trailer; image fields and
+packet indices are big-endian.
+
+These are deterministic software vectors only. T008F does not implement PP4
+or RLE and makes no physical carrier or ESL compatibility claim.

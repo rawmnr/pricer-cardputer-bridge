@@ -10,6 +10,19 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "pc" / "src"))
 
+from eslbridge.airframe import (
+    TAGTINKER_BARCODE,
+    TAGTINKER_DATA_FRAME_COUNT,
+    TAGTINKER_HEIGHT,
+    TAGTINKER_PADDED_BYTES,
+    TAGTINKER_PAGE,
+    TAGTINKER_PLANE_BYTES,
+    TAGTINKER_RAW_BYTES,
+    TAGTINKER_TYPE_CODE,
+    TAGTINKER_WIDTH,
+    AirFrame,
+    make_tagtinker_profile,
+)
 from eslbridge.precir import (
     BYTES_PER_FRAME,
     PricerPlid,
@@ -32,8 +45,9 @@ from eslbridge.pricehax import (
     make_pricehax_data_bodies,
 )
 
-BARCODE = "N4163114582613272"
+BARCODE = TAGTINKER_BARCODE
 PROFILE_REVISION = "T008E-r1"
+AIRFRAME_PROFILE_REVISION = "T008F-r1"
 VECTOR_DIR = ROOT / "tests" / "vectors"
 ORIENTATION_SOURCE = ROOT / "firmware" / "src" / "orientation_test.cpp"
 RAW_IMAGE_PAYLOAD = bytes.fromhex("f00ff00ff00ff00ff00ff00ff00ff00f")
@@ -188,6 +202,18 @@ def vector_manifest(vector: Vector) -> dict[str, object]:
     }
 
 
+def airframe_manifest(vector: AirFrame) -> dict[str, object]:
+    return {
+        "name": vector.name,
+        "command": f"0x{vector.command:02x}",
+        "frame_length": len(vector.frame),
+        "finalized_hex": vector.frame.hex(),
+        "crc16_le_hex": vector.frame[-2:].hex(),
+        "repeats": vector.repeats,
+        "inter_repeat_gap_us": vector.inter_repeat_gap_us,
+    }
+
+
 def image_manifest(description: str, encoded: EncodedImage) -> dict[str, object]:
     return {
         "description": description,
@@ -201,18 +227,18 @@ def image_manifest(description: str, encoded: EncodedImage) -> dict[str, object]
         "frame_count": len(encoded.padded_payload) // PRICEHAX_BYTES_PER_FRAME,
     }
 
-
 def write_manifest(
     plid: PricerPlid,
     precir: list[Vector],
     compressed: list[Vector],
     raw: list[Vector],
+    airframes: list[AirFrame],
 ) -> None:
     historical_names = (
-        "wake.bin",
-        "params-8x8-color.bin",
-        "data-8x8-color.bin",
-        "refresh.bin",
+        "legacy-precir-wake.bin",
+        "legacy-precir-params-8x8-color.bin",
+        "legacy-precir-data-8x8-color.bin",
+        "legacy-precir-refresh.bin",
     )
     manifest = {
         "target": {
@@ -225,19 +251,28 @@ def write_manifest(
             "raw_frame_plid_order": plid.wire.hex(),
             "modulation": 16,
         },
-        "profile_revision": PROFILE_REVISION,
+        "profile_revision": AIRFRAME_PROFILE_REVISION,
+        "legacy_profile_revision": PROFILE_REVISION,
         "vectors": [
             {**vector_manifest(vector), "name": historical_name}
             for historical_name, vector in zip(historical_names, precir, strict=True)
         ],
-        "precir_control": {"vectors": [vector_manifest(vector) for vector in precir]},
+        "precir_control": {
+            "vectors": [
+                {**vector_manifest(vector), "name": f"legacy-{vector.name}"}
+                for vector in precir
+            ]
+        },
         "pricehax_1327": {
             "upstream_commit": PRICEHAX_UPSTREAM_COMMIT,
             "image": image_manifest(
                 "full-screen all-white, upstream-exact compressed two planes",
                 make_all_white_type_1327_image(),
             ),
-            "vectors": [vector_manifest(vector) for vector in compressed],
+            "vectors": [
+                {**vector_manifest(vector), "name": f"legacy-{vector.name}"}
+                for vector in compressed
+            ],
         },
         "pricehax_1327_raw": {
             "upstream_commit": PRICEHAX_UPSTREAM_COMMIT,
@@ -245,7 +280,27 @@ def write_manifest(
                 "full-screen all-white, raw two planes",
                 make_all_white_type_1327_raw_image(),
             ),
-            "vectors": [vector_manifest(vector) for vector in raw],
+            "vectors": [
+                {**vector_manifest(vector), "name": f"legacy-{vector.name}"}
+                for vector in raw
+            ],
+        },
+        "tagtinker_1327": {
+            "profile_revision": AIRFRAME_PROFILE_REVISION,
+            "source": "i12bp8/TagTinker protocol/tagtinker_proto.c",
+            "barcode": TAGTINKER_BARCODE,
+            "type_code": TAGTINKER_TYPE_CODE,
+            "plid_wire_hex": plid.wire.hex(),
+            "page": TAGTINKER_PAGE,
+            "width": TAGTINKER_WIDTH,
+            "height": TAGTINKER_HEIGHT,
+            "plane_bytes": TAGTINKER_PLANE_BYTES,
+            "raw_bytes": TAGTINKER_RAW_BYTES,
+            "padded_bytes": TAGTINKER_PADDED_BYTES,
+            "packet_bytes": 20,
+            "packet_count": TAGTINKER_DATA_FRAME_COUNT,
+            "compression_type": 0,
+            "vectors": [airframe_manifest(vector) for vector in airframes],
         },
     }
     (VECTOR_DIR / "manifest.json").write_text(
@@ -436,6 +491,80 @@ protocol::Status run_orientation_test(
     ORIENTATION_SOURCE.write_text(source, encoding="utf-8")
 
 
+def write_tagtinker_orientation_source(vectors: list[AirFrame]) -> None:
+    symbols = [f"kTagTinker1327Frame{index:04d}" for index in range(len(vectors))]
+    arrays = "\n\n".join(
+        array_definition(symbol, vector.frame) for symbol, vector in zip(symbols, vectors, strict=True)
+    )
+    entries = "\n".join(
+        f"    {{{symbol}, sizeof({symbol}), {vector.repeats}, "
+        f"{vector.inter_repeat_gap_us}, 0}},"
+        for symbol, vector in zip(symbols, vectors, strict=True)
+    )
+    source = f"""#include "orientation_test.hpp"
+
+#include <Arduino.h>
+
+#include "ir_transmitter.hpp"
+
+// Generated by scripts/generate_vectors.py; direct TagTinker AirFrames only.
+namespace eslbridge {{
+namespace {{
+
+{arrays}
+
+constexpr OrientationTestFrame kTagTinker1327Frames[] = {{
+{entries}
+}};
+constexpr OrientationTestPlan kTagTinker1327Plan = {{
+    kTagTinker1327Frames,
+    sizeof(kTagTinker1327Frames) / sizeof(kTagTinker1327Frames[0]),
+}};
+
+}}  // namespace
+
+const OrientationTestPlan& orientation_test_plan(const OrientationTest test) {{
+    switch (test) {{
+        case OrientationTest::kOne:
+        case OrientationTest::kTwo:
+        case OrientationTest::kThree:
+        case OrientationTest::kFour:
+            return kTagTinker1327Plan;
+        default:
+            return kTagTinker1327Plan;
+    }}
+}}
+
+const char* orientation_test_name(const OrientationTest test) {{
+    return test == OrientationTest::kNone ? "NONE" : "TAGTINKER_1327";
+}}
+
+protocol::Status run_orientation_test(
+    IrTransmitter& transmitter,
+    const OrientationTest test) {{
+    if (test == OrientationTest::kNone) {{
+        return protocol::Status::kInvalidArgument;
+    }}
+    const auto& plan = orientation_test_plan(test);
+    for (std::size_t index = 0; index < plan.frame_count; ++index) {{
+        const auto& frame = plan.frames[index];
+        if (frame.pre_transmit_gap_us != 0) {{
+            delayMicroseconds(frame.pre_transmit_gap_us);
+        }}
+        const auto status = transmitter.send_pricer_frame(
+            16, frame.repeats, frame.inter_repeat_gap_us, frame.data, frame.length);
+        if (status != protocol::Status::kOk) {{
+            return status;
+        }}
+    }}
+    return protocol::Status::kOk;
+}}
+
+}}  // namespace eslbridge
+"""
+    ORIENTATION_SOURCE.write_text(source, encoding="utf-8")
+
+
 def main() -> None:
     plid = derive_pricer_plid(BARCODE)
     assert plid == PricerPlid(internal=b"\x3f\xb7\xb3\x02", wire=b"\x02\xb3\xb7\x3f")
@@ -443,20 +572,22 @@ def main() -> None:
     compressed = make_pricehax_vectors(plid)
     raw = make_pricehax_vectors(plid, raw=True)
     page1 = make_pricehax_vectors(plid, page=1)
+    airframes = make_tagtinker_profile(plid)
 
     VECTOR_DIR.mkdir(parents=True, exist_ok=True)
     _, _, historical_frames = make_vectors()
     retained = {
-        **historical_frames,
+        **{f"legacy-precir-{name}": frame for name, frame in historical_frames.items()},
         **{
-            vector.name: vector.frame
+            f"legacy-{vector.name}": vector.frame
             for vector in (*precir, *compressed, *raw, *page1[1:2])
         },
+        **{vector.name: vector.frame for vector in airframes},
     }
     for name, frame in retained.items():
         (VECTOR_DIR / name).write_bytes(frame)
-    write_manifest(plid, precir, compressed, raw)
-    write_orientation_source(precir, compressed, raw, page1)
+    write_manifest(plid, precir, compressed, raw, airframes)
+    write_tagtinker_orientation_source(airframes)
 
 
 if __name__ == "__main__":

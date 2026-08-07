@@ -1,4 +1,8 @@
-"""PrecIR interoperability adapter for Pricer PP16 frame formatting and CRC16 calculation.
+"""Legacy PrecIR interoperability adapter for historical dongle framing.
+
+Direct on-air AirFrames are implemented in :mod:`eslbridge.airframe` and do
+not contain the legacy ``00 00 00 40`` dongle metadata marker. This module
+retains the marker only for explicitly named historical compatibility vectors.
 
 PROVISIONAL / INFERRED WARNING:
 Frame finalization, header placement, and CRC16 algorithms in this module are clean-room
@@ -14,10 +18,8 @@ Provenance & Citation:
   - tools_python/img2dm.py (20-byte image packetization and zero padding)
 - Reference doc: https://www.furrtek.org/index.php?a=esl
 - License: GNU General Public License v3.0
-- Clean-room status: No PrecIR source code was copied or vendored. Frame layout,
-  PP16 header bytes (0x00, 0x00, 0x00, 0x40), CRC16 calculation (poly 0x8408,
-  init 0x8408), and image packet sizing are clean-room reimplementations derived
-  from the published Python tools and reverse-engineering documentation.
+- Clean-room status: No PrecIR source code was copied or vendored. The
+  ``00 00 00 40`` marker is compatibility metadata, not direct AirFrame data.
 """
 
 from __future__ import annotations
@@ -37,7 +39,7 @@ from .models import (
     PricerFrameRequest,
 )
 
-# Documented PrecIR PP16 header prefix; PP4 has no extra prefix.
+# Legacy PrecIR dongle marker; direct AirFrames in ``airframe.py`` omit it.
 # Source: tools_python/pr.py in PrecIR commit b09951e2b3d2741e4ca08f929eafef849f6fc006
 PRECIR_PP16_HEADER: Final[bytes] = b"\x00\x00\x00\x40"
 PRECIR_PP4_HEADER: Final[bytes] = b""
