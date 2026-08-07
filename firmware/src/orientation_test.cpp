@@ -2111,7 +2111,11 @@ protocol::Status run_orientation_test(
             delayMicroseconds(frame.pre_transmit_gap_us);
         }
         const auto status = transmitter.send_pricer_frame(
-            16, frame.repeats, frame.inter_repeat_gap_us, frame.data, frame.length);
+            config::kModulationPp4,
+            frame.repeats,
+            frame.inter_repeat_gap_us,
+            frame.data,
+            frame.length);
         if (status != protocol::Status::kOk) {
             return status;
         }

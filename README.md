@@ -74,8 +74,8 @@ parameters, 292 indexed 20-byte data packets, and refresh. Repeat metadata is
 prepended by this direct path.
 
 Historical PrecIR and PricehaxBT profiles remain available only as explicitly
-named non-primary compatibility vectors. No PP4/RLE implementation or physical
-ESL compatibility claim is made.
+named non-primary compatibility vectors. The direct TagTinker path uses the
+bounded PP4 waveform generator; physical ESL compatibility remains unverified.
 
 ## Why this split
 
