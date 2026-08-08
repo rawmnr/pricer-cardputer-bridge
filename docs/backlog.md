@@ -111,7 +111,8 @@ Acceptance:
 - image fields and indices are big-endian, CRC16 trailers little-endian;
 - ping golden bytes, packetization, blank accent plane, repeat metadata, and
   builder determinism are covered by host tests;
-- no PP4/RLE implementation or physical compatibility claim is introduced.
+- PP4 transport is implemented from the TagTinker timing evidence; no physical
+  compatibility claim is introduced.
 
 ## T008 - PrecIR interoperability adapter and audit
 

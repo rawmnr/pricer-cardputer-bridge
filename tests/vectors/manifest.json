@@ -1688,8 +1688,8 @@
         "name": "tagtinker-1327-params-page0.bin",
         "command": "0x05",
         "frame_length": 34,
-        "finalized_hex": "8502b3b73f340000000516c000000000d000700000000000008800000000000012bb",
-        "crc16_le_hex": "12bb",
+        "finalized_hex": "8502b3b73f340000000516d000000000d0007000000000000088000000000000e1d5",
+        "crc16_le_hex": "e1d5",
         "repeats": 16,
         "inter_repeat_gap_us": 500
       },

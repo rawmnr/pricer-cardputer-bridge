@@ -249,7 +249,8 @@ The profile targets barcode `N4163114582613272`:
 - type code `1327`, wire PLID `02 B3 B7 3F`;
 - page `0`, dimensions `208 x 112`;
 - two MSB-first bitplanes, `2,912` bytes each;
-- raw image length `5,824` bytes, zero-padded to `5,840`;
+- raw image length `5,824` bytes, zero-padded to `5,840`; the image
+  parameter frame advertises the padded `5,840`-byte count;
 - indexed `20`-byte data packets, `292` packets;
 - image fields and packet indices are big-endian; CRC16 is little-endian;
 - ping is exactly `32` bytes;
@@ -264,8 +265,8 @@ are required by the local upstream transmit sequence.
 The generated vectors are software golden data only. The T009B retest recorded
 an operator-observed no-reaction result after the settle-gap repair. Carrier
 frequency, optical output, receiver response, and physical interoperability
-were not measured; no physical compatibility claim is made. PP4 and RLE are
-outside this profile.
+were not measured; no physical compatibility claim is made. The TagTinker
+profile uses PP4 transport; RLE remains outside this profile.
 
 The historical T008E PricehaxBT profile remains available as explicitly
 non-primary compatibility data. It must not be treated as the direct

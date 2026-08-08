@@ -111,12 +111,12 @@ def make_tagtinker_ping_frame(plid: PricerPlid) -> bytes:
 def make_tagtinker_params_frame(
     plid: PricerPlid,
     *,
-    byte_count: int = TAGTINKER_RAW_BYTES,
+    byte_count: int = TAGTINKER_PADDED_BYTES,
     page: int = TAGTINKER_PAGE,
     width: int = TAGTINKER_WIDTH,
     height: int = TAGTINKER_HEIGHT,
 ) -> bytes:
-    """Build the raw type-1327 page-0, uncompressed image parameter frame."""
+    """Build the padded raw type-1327 page-0 parameter frame."""
     fields = (byte_count, width, height, 0, 0, 0)
     if not 0 <= byte_count <= 0xFFFF or not 0 <= page <= 0xFF:
         raise AirFrameError("image byte count/page is outside wire range")

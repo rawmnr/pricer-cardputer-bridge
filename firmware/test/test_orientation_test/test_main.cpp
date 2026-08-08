@@ -51,9 +51,11 @@ void test_orientation_frame_order_and_count(void) {
     TEST_ASSERT_EQUAL_UINT8(0x85, plan.frames[0].data[0]);
     TEST_ASSERT_EQUAL_UINT8(0x97, plan.frames[0].data[5]);
 
-    TEST_ASSERT_EQUAL_UINT32(32, plan.frames[1].length);
+    TEST_ASSERT_EQUAL_UINT32(34, plan.frames[1].length);
     TEST_ASSERT_EQUAL_UINT8(0x34, plan.frames[1].data[5]);
     TEST_ASSERT_EQUAL_UINT8(0x05, plan.frames[1].data[9]);
+    TEST_ASSERT_EQUAL_UINT8(0x16, plan.frames[1].data[10]);
+    TEST_ASSERT_EQUAL_UINT8(0xD0, plan.frames[1].data[11]);
 
     for (std::size_t packet = 0; packet < 292; ++packet) {
         const auto& frame = plan.frames[2 + packet];
@@ -68,7 +70,7 @@ void test_orientation_frame_order_and_count(void) {
     }
 
     const auto& refresh = plan.frames[294];
-    TEST_ASSERT_TRUE(refresh.length > 0);
+    TEST_ASSERT_EQUAL_UINT32(30, refresh.length);
     TEST_ASSERT_EQUAL_UINT8(0x85, refresh.data[0]);
     TEST_ASSERT_EQUAL_UINT8(0x34, refresh.data[5]);
     TEST_ASSERT_EQUAL_UINT8(0x01, refresh.data[9]);

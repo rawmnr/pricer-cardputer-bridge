@@ -80,7 +80,7 @@ def test_image_fields_and_crc_wire_endianness() -> None:
     assert frame[0:5] == b"\x85\x02\xb3\xb7\x3f"
     assert frame[5:9] == b"\x34\x00\x00\x00"
     assert frame[9] == 0x05
-    assert frame[10:12] == TAGTINKER_RAW_BYTES.to_bytes(2, "big")
+    assert frame[10:12] == TAGTINKER_PADDED_BYTES.to_bytes(2, "big")
     assert frame[12:15] == bytes((0, 0, TAGTINKER_PAGE))
     assert frame[15:17] == TAGTINKER_WIDTH.to_bytes(2, "big")
     assert frame[17:19] == TAGTINKER_HEIGHT.to_bytes(2, "big")
