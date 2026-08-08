@@ -90,12 +90,11 @@ struct TimingProfile {
         if (duty_percent < kMinDutyPercent || duty_percent > kMaxDutyPercent) {
             return false;
         }
-        if (symbol_burst_us == 0 || symbol_burst_us > 1000 || symbol_burst_rmt_ticks == 0) {
+        if (symbol_burst_us == 0 || symbol_burst_us > 1000) {
             return false;
         }
-        for (std::size_t i = 0; i < symbol_gaps_us.size(); ++i) {
-            if (symbol_gaps_us[i] == 0 || symbol_gaps_us[i] > 5000 ||
-                symbol_gap_rmt_ticks[i] == 0) {
+        for (const auto gap_us : symbol_gaps_us) {
+            if (gap_us == 0 || gap_us > 5000) {
                 return false;
             }
         }

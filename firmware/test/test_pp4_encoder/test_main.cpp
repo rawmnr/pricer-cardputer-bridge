@@ -156,6 +156,22 @@ void test_empty_payload_and_invalid_profile_rejected(void) {
         static_cast<int>(encode_frame(&payload, 1, invalid, frame)));
 }
 
+void test_zero_tick_metadata_falls_back_to_rmt_clock(void) {
+    TimingProfile profile = make_tagtinker_profile();
+    profile.symbol_burst_rmt_ticks = 0;
+    profile.symbol_gap_rmt_ticks.fill(0);
+    TEST_ASSERT_TRUE(profile.validate());
+
+    const auto symbol = profile.symbol_timing(1);
+    RmtPhaseTicks ticks{};
+    TEST_ASSERT_EQUAL(
+        static_cast<int>(Status::kOk),
+        static_cast<int>(convert_symbol_to_ticks(symbol, ticks)));
+    TEST_ASSERT_EQUAL_UINT16(400, ticks.high_ticks);
+    TEST_ASSERT_EQUAL_UINT16(2420, ticks.low_ticks);
+}
+
+
 void test_symbol_to_ticks_conversion(void) {
     const Pp4Symbol symbol{1, 40, 243};
     RmtPhaseTicks ticks{};
@@ -180,6 +196,7 @@ void run_all_tests(void) {
     RUN_TEST(test_ordering_crosses_byte_boundary);
     RUN_TEST(test_encode_maximum_frame_is_bounded);
     RUN_TEST(test_empty_payload_and_invalid_profile_rejected);
+    RUN_TEST(test_zero_tick_metadata_falls_back_to_rmt_clock);
     RUN_TEST(test_symbol_to_ticks_conversion);
     UNITY_END();
 }
