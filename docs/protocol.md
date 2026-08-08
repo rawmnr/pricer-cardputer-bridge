@@ -132,21 +132,22 @@ symbol2 = (byte >> 4) & 0x03
 symbol3 = (byte >> 6) & 0x03
 ```
 
-The TagTinker/PrecIR-derived post-burst gaps are indexed directly by the raw
-symbol value:
+The TagTinker post-burst gaps are indexed directly by the raw symbol value.
+The reference uses a 64 MHz timer; the RMT conversion below rounds those
+source cycles to the ESP32-S3's 10 MHz item clock:
 
-| Raw symbol | Post-burst gap (us) |
-|---:|---:|
-| `00` | 61 |
-| `01` | 243 |
-| `10` | 122 |
-| `11` | 182 |
+| Raw symbol | Reference cycles | Rounded gap (us) | RMT ticks |
+|---:|---:|---:|---:|
+| `00` | 3,871 | 61 | 605 |
+| `01` | 15,483 | 242 | 2,419 |
+| `10` | 7,741 | 121 | 1,210 |
+| `11` | 11,612 | 181 | 1,814 |
 
-Every data symbol contains an approximately 40 us carrier burst followed by
-its lookup gap. Exactly one approximately 40 us carrier burst with no
-following gap terminates each encoded frame. The maximum 256-byte frame
-therefore occupies 1,025 bounded RMT items and is sent as one contiguous
-transaction per repeat.
+Every data symbol contains the TagTinker 2,581-cycle carrier burst (40 us
+rounded metadata, 403 RMT ticks) followed by its lookup gap. Exactly one
+terminal 2,581-cycle burst with no following gap terminates each encoded frame.
+The maximum 256-byte frame therefore occupies 1,025 bounded RMT items and is
+sent as one contiguous transaction per repeat.
 
 The requested TagTinker timer-equivalent carrier is 1,254,902 Hz (64 MHz / 51).
 With the ESP32-S3's 80 MHz APB integer period, the configured RMT carrier uses
@@ -235,9 +236,15 @@ embedded in raw frame bytes.
 
 ### TagTinker type-1327 direct profile
 
-The deterministic T008F profile is derived from the clean-room transcription
-of TagTinker's published `protocol/tagtinker_proto.c` and targets barcode
-`N4163114582613272`:
+The deterministic T008F profile is derived from a clean-room comparison with
+TagTinker's published type-1327 implementation. Local comparison against
+TagTinker upstream commit
+`81adb463eb9918b72a3acaabd5ef452960ba81ce` matches the generated AirFrame
+bytes and the PP4 raw-symbol mapping. This confirms source/vector
+correspondence, not carrier accuracy, optical output, receiver behavior, or
+physical ESL compatibility.
+
+The profile targets barcode `N4163114582613272`:
 
 - type code `1327`, wire PLID `02 B3 B7 3F`;
 - page `0`, dimensions `208 x 112`;
@@ -249,9 +256,16 @@ of TagTinker's published `protocol/tagtinker_proto.c` and targets barcode
 - physical repeat metadata is ping `81`, params `16`, data `3`, refresh `21`,
   all with a `500 us` inter-repeat gap.
 
-The generated vectors are software golden data only. They do not establish
-carrier, optical, tag, or physical interoperability. PP4 and RLE are outside
-this profile.
+The transmit scene additionally requires settle delays: `50 ms` after ping,
+`50 ms` after parameters, `1 ms` after every 32 data frames, and `50 ms`
+before refresh. These scene delays are distinct from the per-repeat gap and
+are required by the local upstream transmit sequence.
+
+The generated vectors are software golden data only. The T009B retest recorded
+an operator-observed no-reaction result after the settle-gap repair. Carrier
+frequency, optical output, receiver response, and physical interoperability
+were not measured; no physical compatibility claim is made. PP4 and RLE are
+outside this profile.
 
 The historical T008E PricehaxBT profile remains available as explicitly
 non-primary compatibility data. It must not be treated as the direct

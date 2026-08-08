@@ -19,19 +19,36 @@ constexpr std::uint32_t kTicksPerMicrosecond = 10;
 constexpr std::uint32_t kMaxRmtPhaseTicks = 32767;
 constexpr std::uint32_t kApbClockHz = 80'000'000;
 
-// TagTinker configures 64 MHz / 51 = 1,254,902 Hz. The ESP32-S3
-// APB-divided RMT carrier uses the nearest integer period: 80 MHz / 64 =
-// 1,250,000 Hz. Keep both values visible; neither is a physical validation.
+// TagTinker measures PP4 phases from a 64 MHz timer. Preserve those source
+// cycles when converting to the ESP32-S3 RMT's 10 MHz item clock.
+constexpr std::uint32_t kTagTinkerTimingClockHz = 64'000'000;
+constexpr std::uint32_t kTagTinkerBurstCycles = 2581;
+inline constexpr std::array<std::uint32_t, 4> kTagTinkerSymbolGapCycles{
+    3871, 15483, 7741, 11612};
+
+constexpr std::uint16_t reference_cycles_to_rmt_ticks(const std::uint32_t cycles) {
+    return static_cast<std::uint16_t>(
+        (cycles * kTicksPerMicrosecond + (kTagTinkerTimingClockHz / 2U)) /
+        kTagTinkerTimingClockHz);
+}
+
+constexpr std::uint16_t kTagTinkerBurstRmtTicks =
+    reference_cycles_to_rmt_ticks(kTagTinkerBurstCycles);
+inline constexpr std::array<std::uint16_t, 4> kTagTinkerSymbolGapRmtTicks{
+    reference_cycles_to_rmt_ticks(kTagTinkerSymbolGapCycles[0]),
+    reference_cycles_to_rmt_ticks(kTagTinkerSymbolGapCycles[1]),
+    reference_cycles_to_rmt_ticks(kTagTinkerSymbolGapCycles[2]),
+    reference_cycles_to_rmt_ticks(kTagTinkerSymbolGapCycles[3])};
+
+// Rounded display values; conversion to RMT uses the cycle-derived ticks above.
 constexpr std::uint32_t kTagTinkerCarrierHz = 1'254'902;
 constexpr std::uint32_t kTagTinkerEffectiveCarrierHz = 1'250'000;
 constexpr std::uint8_t kTagTinkerDutyPercent = 50;
 constexpr std::uint32_t kTagTinkerBurstUs = 40;
 
-// Raw 2-bit symbols, indexed by value (00, 01, 10, 11).
-// Timing values are clean-room constants from the TagTinker/PrecIR behavior
-// described by issue T006C; physical compatibility remains unverified.
+// Indexed directly by the raw 2-bit symbol value.
 inline constexpr std::array<std::uint32_t, 4> kTagTinkerSymbolGapsUs{
-    61, 243, 122, 182};
+    61, 242, 121, 181};
 
 enum class Status : std::uint8_t {
     kOk = 0,
@@ -46,6 +63,8 @@ struct Pp4Symbol {
     std::uint8_t value{0};
     std::uint32_t burst_us{0};
     std::uint32_t gap_us{0};
+    std::uint16_t rmt_high_ticks{0};
+    std::uint16_t rmt_low_ticks{0};
 
     constexpr std::uint32_t total_us() const { return burst_us + gap_us; }
 };
@@ -60,6 +79,8 @@ struct TimingProfile {
     std::uint8_t duty_percent{kTagTinkerDutyPercent};
     std::uint32_t symbol_burst_us{kTagTinkerBurstUs};
     std::array<std::uint32_t, 4> symbol_gaps_us{kTagTinkerSymbolGapsUs};
+    std::uint16_t symbol_burst_rmt_ticks{kTagTinkerBurstRmtTicks};
+    std::array<std::uint16_t, 4> symbol_gap_rmt_ticks{kTagTinkerSymbolGapRmtTicks};
     bool is_provisional{true};
 
     constexpr bool validate() const {
@@ -69,11 +90,12 @@ struct TimingProfile {
         if (duty_percent < kMinDutyPercent || duty_percent > kMaxDutyPercent) {
             return false;
         }
-        if (symbol_burst_us == 0 || symbol_burst_us > 1000) {
+        if (symbol_burst_us == 0 || symbol_burst_us > 1000 || symbol_burst_rmt_ticks == 0) {
             return false;
         }
-        for (const auto gap_us : symbol_gaps_us) {
-            if (gap_us == 0 || gap_us > 5000) {
+        for (std::size_t i = 0; i < symbol_gaps_us.size(); ++i) {
+            if (symbol_gaps_us[i] == 0 || symbol_gaps_us[i] > 5000 ||
+                symbol_gap_rmt_ticks[i] == 0) {
                 return false;
             }
         }
@@ -86,7 +108,12 @@ struct TimingProfile {
 
     constexpr Pp4Symbol symbol_timing(const std::uint8_t symbol) const {
         const auto raw_symbol = static_cast<std::uint8_t>(symbol & 0x03U);
-        return Pp4Symbol{raw_symbol, symbol_burst_us, symbol_gap_us(raw_symbol)};
+        return Pp4Symbol{
+            raw_symbol,
+            symbol_burst_us,
+            symbol_gap_us(raw_symbol),
+            symbol_burst_rmt_ticks,
+            symbol_gap_rmt_ticks[raw_symbol]};
     }
 
     constexpr std::uint32_t effective_carrier_frequency_hz() const {

@@ -32,7 +32,8 @@ Status encode_frame(
     }
 
     // The terminal burst is mandatory and carries no encoded symbol.
-    const Pp4Symbol terminal{0, profile.symbol_burst_us, 0};
+    const Pp4Symbol terminal{
+        0, profile.symbol_burst_us, 0, profile.symbol_burst_rmt_ticks, 0};
     out_frame.symbols[out_frame.symbol_count++] = terminal;
     out_frame.total_duration_us += terminal.total_us();
 
@@ -42,8 +43,12 @@ Status encode_frame(
 Status convert_symbol_to_ticks(
     const Pp4Symbol& symbol,
     RmtPhaseTicks& out_ticks) {
-    const auto high_ticks = symbol.burst_us * kTicksPerMicrosecond;
-    const auto low_ticks = symbol.gap_us * kTicksPerMicrosecond;
+    const auto high_ticks = symbol.rmt_high_ticks != 0
+                                ? symbol.rmt_high_ticks
+                                : symbol.burst_us * kTicksPerMicrosecond;
+    const auto low_ticks = symbol.rmt_low_ticks != 0
+                               ? symbol.rmt_low_ticks
+                               : symbol.gap_us * kTicksPerMicrosecond;
     if (high_ticks > kMaxRmtPhaseTicks || low_ticks > kMaxRmtPhaseTicks) {
         return Status::kDurationOverflow;
     }

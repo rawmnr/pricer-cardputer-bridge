@@ -69,9 +69,18 @@ one of the number keys. Each key selects the same direct AirFrame profile:
 
 The profile targets barcode `N4163114582613272`, sends page 0 at 208 x 112
 with two MSB-first planes, and uses direct AirFrame bytes. It sends a ping,
-parameters, 292 indexed 20-byte data packets, and refresh. Repeat metadata is
-81/16/3/21 with a 500 us gap. The legacy `00 00 00 40` dongle marker is never
-prepended by this direct path.
+parameters, 292 indexed 20-byte data packets, and refresh. The repeat metadata
+is 81/16/3/21 with a 500 us inter-repeat gap; the transmit scene also requires
+50 ms settle delays after ping and parameters, a 1 ms delay after every 32 data
+frames, and 50 ms before refresh. The legacy `00 00 00 40` dongle marker is
+never prepended by this direct path.
+
+Local comparison with TagTinker upstream commit
+`81adb463eb9918b72a3acaabd5ef452960ba81ce` matches the generated AirFrame
+bytes and PP4 raw-symbol mapping. This is source/vector correspondence
+evidence only: the 2026-08-08 settle-gap retest still produced an operator-
+observed no-reaction result, and carrier behavior, optical behavior, and
+physical ESL compatibility remain unmeasured or unverified.
 
 Historical PrecIR and PricehaxBT profiles remain available only as explicitly
 named non-primary compatibility vectors. The direct TagTinker path uses the

@@ -50,6 +50,17 @@ protocol::Status IrTransmitter::begin() {
         state_ = protocol::TransmitterState::kFault;
         return protocol::Status::kHardwareError;
     }
+    // Re-assert the legacy driver's GPIO-matrix route after M5Cardputer
+    // initialization. This keeps the RMT channel on the documented GPIO 44
+    // output instead of relying only on RMT_DEFAULT_CONFIG_TX side effects.
+    if (rmt_set_gpio(
+            kRmtChannel,
+            RMT_MODE_TX,
+            static_cast<gpio_num_t>(config::kIrGpio),
+            false) != ESP_OK) {
+        state_ = protocol::TransmitterState::kFault;
+        return protocol::Status::kHardwareError;
+    }
     if (rmt_driver_install(kRmtChannel, 0, 0) != ESP_OK) {
         state_ = protocol::TransmitterState::kFault;
         return protocol::Status::kHardwareError;

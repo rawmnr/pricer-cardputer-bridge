@@ -19,16 +19,20 @@ void test_tagtinker_profile_and_effective_carrier(void) {
     TEST_ASSERT_EQUAL_UINT32(kTagTinkerEffectiveCarrierHz, profile.effective_carrier_frequency_hz());
     TEST_ASSERT_EQUAL_UINT8(50, profile.duty_percent);
     TEST_ASSERT_EQUAL_UINT32(40, profile.symbol_burst_us);
+    TEST_ASSERT_EQUAL_UINT16(403, profile.symbol_burst_rmt_ticks);
 }
 
 void test_symbol_gap_lookup_uses_raw_two_bit_value(void) {
     const TimingProfile profile = make_tagtinker_profile();
+    const std::uint16_t expected_rmt_gaps[] = {605, 2419, 1210, 1814};
     for (std::uint8_t symbol = 0; symbol < 4; ++symbol) {
         TEST_ASSERT_EQUAL_UINT32(kTagTinkerSymbolGapsUs[symbol], profile.symbol_gap_us(symbol));
         const auto timing = profile.symbol_timing(symbol);
         TEST_ASSERT_EQUAL_UINT8(symbol, timing.value);
         TEST_ASSERT_EQUAL_UINT32(40, timing.burst_us);
         TEST_ASSERT_EQUAL_UINT32(kTagTinkerSymbolGapsUs[symbol], timing.gap_us);
+        TEST_ASSERT_EQUAL_UINT16(403, timing.rmt_high_ticks);
+        TEST_ASSERT_EQUAL_UINT16(expected_rmt_gaps[symbol], timing.rmt_low_ticks);
     }
 }
 
@@ -42,7 +46,7 @@ void test_all_raw_symbols_are_lsb_pair_first(void) {
         static_cast<int>(encode_frame(payload, 1, profile, frame)));
     TEST_ASSERT_EQUAL_UINT32(5, frame.symbol_count);
     const std::uint8_t expected_symbols[] = {0, 1, 2, 3, 0};
-    const std::uint32_t expected_starts[] = {0, 101, 384, 546, 768};
+    const std::uint32_t expected_starts[] = {0, 101, 383, 544, 765};
     std::uint32_t elapsed = 0;
     for (std::size_t i = 0; i < frame.symbol_count; ++i) {
         TEST_ASSERT_EQUAL_UINT32(expected_starts[i], elapsed);
@@ -50,18 +54,18 @@ void test_all_raw_symbols_are_lsb_pair_first(void) {
         TEST_ASSERT_EQUAL_UINT32(40, frame.symbols[i].burst_us);
         elapsed += frame.symbols[i].total_us();
     }
-    TEST_ASSERT_EQUAL_UINT32(808, frame.total_duration_us);
-    TEST_ASSERT_EQUAL_UINT32(808, elapsed);
+    TEST_ASSERT_EQUAL_UINT32(805, frame.total_duration_us);
+    TEST_ASSERT_EQUAL_UINT32(805, elapsed);
     TEST_ASSERT_EQUAL_UINT32(0, frame.symbols[4].gap_us);
 }
 
 void test_golden_single_byte_patterns_and_closing_burst(void) {
     const TimingProfile profile = make_tagtinker_profile();
     const std::uint8_t payloads[] = {0x00, 0x55, 0xAA, 0xFF};
-    const std::uint32_t expected_data_symbol_total_us[] = {404, 1132, 648, 888};
-    const std::uint32_t expected_total_us[] = {444, 1172, 688, 928};
-    const std::uint32_t expected_gap_us[] = {61, 243, 122, 182};
-    const std::uint32_t expected_terminal_start_us[] = {404, 1132, 648, 888};
+    const std::uint32_t expected_data_symbol_total_us[] = {404, 1128, 644, 884};
+    const std::uint32_t expected_total_us[] = {444, 1168, 684, 924};
+    const std::uint32_t expected_gap_us[] = {61, 242, 121, 181};
+    const std::uint32_t expected_terminal_start_us[] = {404, 1128, 644, 884};
     for (std::size_t case_index = 0; case_index < 4; ++case_index) {
         EncodedFrame frame{};
         TEST_ASSERT_EQUAL(
@@ -116,11 +120,11 @@ void test_encode_maximum_frame_is_bounded(void) {
         static_cast<int>(Status::kOk),
         static_cast<int>(encode_frame(max_payload, kMaxFrameBytes, profile, frame)));
     TEST_ASSERT_EQUAL_UINT32(kMaxSymbolsPerFrame, frame.symbol_count);
-    TEST_ASSERT_EQUAL_UINT32((256U * 4U * (40U + 122U)) + 40U, frame.total_duration_us);
+    TEST_ASSERT_EQUAL_UINT32((256U * 4U * (40U + 121U)) + 40U, frame.total_duration_us);
     std::uint32_t elapsed = 0;
     for (std::size_t i = 0; i < frame.symbol_count; ++i) {
         if (i == frame.symbol_count - 1) {
-            TEST_ASSERT_EQUAL_UINT32(256U * 4U * (40U + 122U), elapsed);
+            TEST_ASSERT_EQUAL_UINT32(256U * 4U * (40U + 121U), elapsed);
         }
         elapsed += frame.symbols[i].total_us();
     }
