@@ -27,7 +27,7 @@ from eslbridge.airframe import (
     make_two_plane_payload,
     packetize_tagtinker_image,
 )
-from eslbridge.precir import calculate_precir_crc16, derive_pricer_plid
+from eslbridge.precir import MODULATION_PP4, calculate_precir_crc16, derive_pricer_plid
 
 PLID = derive_pricer_plid(TAGTINKER_BARCODE)
 PING_GOLDEN = bytes.fromhex("8502b3b73f97010000000101010101010101010101010101010101010101402c")
@@ -102,6 +102,7 @@ def test_profile_builder_is_deterministic_and_metadata_is_separate() -> None:
     )
     assert {vector.inter_repeat_gap_us for vector in first} == {TAGTINKER_GAP_US}
     assert all(vector.request().frame == vector.frame for vector in first)
+    assert all(vector.request().modulation == MODULATION_PP4 for vector in first)
     assert all(vector.request().repeats == vector.repeats for vector in first)
 
 

@@ -1,6 +1,6 @@
 """Direct Pricer AirFrame builders for the TagTinker type-1327 profile.
 
-These bytes are the payload sent to the PP16 symbol encoder.  The legacy
+These bytes are the payload sent to the PP4 symbol encoder.  The legacy
 PrecIR/IRDongle transport marker ``00 00 00 40`` is deliberately not part of
 an AirFrame and is only available through explicit compatibility helpers.
 
@@ -15,6 +15,7 @@ from typing import Final
 
 from .models import PricerFrameRequest
 from .precir import (
+    MODULATION_PP4,
     PricerPlid,
     build_pricer_frame_request,
     calculate_precir_crc16,
@@ -53,11 +54,12 @@ class AirFrame:
     inter_repeat_gap_us: int = TAGTINKER_GAP_US
 
     def request(self) -> PricerFrameRequest:
-        """Return a bridge request without embedding repeat metadata in bytes."""
+        """Return a PP4 bridge request without embedding repeat metadata in bytes."""
         return build_pricer_frame_request(
             self.frame,
             repeats=self.repeats,
             inter_repeat_gap_us=self.inter_repeat_gap_us,
+            modulation=MODULATION_PP4,
         )
 
     def __post_init__(self) -> None:
