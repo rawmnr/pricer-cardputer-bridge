@@ -5,6 +5,11 @@
 
 #include "orientation_test.hpp"
 #include "ir_transmitter.hpp"
+
+#ifndef ARDUINO
+inline void delayMicroseconds(unsigned int) {}
+#endif
+
 // Include implementation directly for isolated PlatformIO test unit linking.
 #include "../../src/orientation_test.cpp"
 

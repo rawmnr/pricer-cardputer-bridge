@@ -34,6 +34,28 @@ Primary source: M5Stack Cardputer-Adv product documentation and schematics.
 
 Each hypothesis requires a reproducible test before it becomes a project fact.
 
+## No-oscilloscope verification limits
+
+Without an oscilloscope, logic analyzer, photodiode, or equivalent timing instrument, verification is limited to software identity, bounded-command behavior, and observable end-to-end symptoms:
+
+- A phone or digital camera can show IR emission only if its sensor is sensitive to the wavelength. It cannot prove carrier frequency, duty cycle, PP4 symbol timing, or other physical waveform timing.
+- A visible ESL response is end-to-end behavioral evidence that a complete trial produced an observable result. It cannot isolate carrier frequency, duty cycle, PP4 timing, optical power, receiver behavior, or any other physical cause.
+- Keep the near-IR carrier frequency, duty cycle, symbol timings, and ESL compatibility as hypotheses pending measurement. Do not promote any T005 physical claim without a recorded instrument measurement; no oscilloscope means T005 remains unvalidated.
+
+## Reproducible device smoke procedure
+
+Use this ordered procedure for a device-only smoke check. It is not a substitute for T005 measurement or an ESL compatibility validation:
+
+1. Install the current application-only `firmware.bin` through M5Launcher using its SD browser or WebUI OTA path. Do not use a merged image or full-flash upload.
+2. Launch the bridge application and confirm the ready screen shows the expected seven-character Git SHA and the expected firmware profile. Stop if either identity is unknown or does not match the selected artifact.
+3. Run the bounded carrier test on GPIO 44. Keep the firmware-enforced burst hard limit at or below 5 ms; never use a continuous-carrier mode.
+4. If the camera sensor can see the emitter, observe the GPIO 44 IR output during the bounded burst and record whether emission was visible. Treat this as optical-emission smoke evidence only, not frequency or timing evidence.
+5. Only on a personally owned or explicitly authorized ESL, run the TagTinker-derived orientation test. Record whether the tag visibly responds, without treating a response or no-response as proof of physical timing correctness.
+6. Using `docs/bench-template.md`, record the exact artifact path, device and firmware identity, distance, emitter/receiver alignment, ambient-light conditions, repetition settings, observed result, and raw artifact path. Mark unmeasured carrier frequency, duty, timing, and ESL compatibility as hypotheses.
+
+The procedure may establish that the application boots, identifies itself, accepts a bounded request, and possibly produces visible optical or ESL behavior. It must not be used to promote T005 frequency/duty claims or any physical ESL compatibility claim without instrumented measurement.
+
+
 ## Bench priorities
 
 1. Confirm firmware can toggle GPIO 44 through RMT.

@@ -27,9 +27,15 @@ inline constexpr std::array<std::uint32_t, 4> kTagTinkerSymbolGapCycles{
     3871, 15483, 7741, 11612};
 
 constexpr std::uint16_t reference_cycles_to_rmt_ticks(const std::uint32_t cycles) {
+    constexpr std::uint32_t kReferenceCyclesPerMicrosecond =
+        kTagTinkerTimingClockHz / 1'000'000U;
+    constexpr std::uint32_t kRoundingBias = kReferenceCyclesPerMicrosecond / 2U;
+    const auto whole_cycles = cycles / kReferenceCyclesPerMicrosecond;
+    const auto remainder_cycles = cycles % kReferenceCyclesPerMicrosecond;
     return static_cast<std::uint16_t>(
-        (cycles * kTicksPerMicrosecond + (kTagTinkerTimingClockHz / 2U)) /
-        kTagTinkerTimingClockHz);
+        whole_cycles * kTicksPerMicrosecond +
+        ((remainder_cycles * kTicksPerMicrosecond + kRoundingBias) /
+         kReferenceCyclesPerMicrosecond));
 }
 
 constexpr std::uint16_t kTagTinkerBurstRmtTicks =

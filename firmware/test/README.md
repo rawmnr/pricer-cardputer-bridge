@@ -1,13 +1,27 @@
 # Firmware tests
 
-Firmware protocol and stream parser behavior is validated locally using the PlatformIO Unity test framework (`test/test_stream_parser`).
+The host-compatible firmware suites run with PlatformIO's Unity test
+framework. From the repository root on Windows:
 
-## Test Environments & Guidance
+```powershell
+pio test -d firmware -e native
+```
 
-- **Compile-Only & Host Unit Verification**:
-  - Unit tests for protocol encoding/decoding, stream framing, noise resynchronization, and bounded buffer bounds execute locally via PlatformIO's Unity suite (`pio test -e native` or host unit test runner).
-  - CI verifies firmware compilation across target environments without requiring connected hardware.
+This command currently runs all five suites:
 
-- **Hardware-in-the-Loop (HIL) Execution**:
-  - Physical Cardputer hardware tests execute on real target boards connected via USB CDC.
-  - Hardware tests validate physical serial timing, RMT carrier generation, button UI state, and end-to-end USB CDC communication against real hardware.
+- `test_bridge_protocol`
+- `test_ir_transmitter`
+- `test_orientation_test`
+- `test_pp16_encoder`
+- `test_pp4_encoder`
+
+The native environment requires a C++17-capable GCC/G++ compiler on `PATH`.
+CI also verifies firmware compilation across target environments without
+requiring connected hardware.
+
+## Hardware-in-the-Loop (HIL) Execution
+
+Physical Cardputer hardware tests execute on real target boards connected via
+USB CDC. Hardware tests validate physical serial timing, RMT carrier
+generation, button UI state, and end-to-end USB CDC communication against real
+hardware.

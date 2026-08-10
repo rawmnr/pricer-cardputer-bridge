@@ -35,6 +35,14 @@ void test_symbol_gap_lookup_uses_raw_two_bit_value(void) {
         TEST_ASSERT_EQUAL_UINT16(expected_rmt_gaps[symbol], timing.rmt_low_ticks);
     }
 }
+void test_reference_cycles_to_rmt_ticks_uses_tagtinker_literals(void) {
+    TEST_ASSERT_EQUAL_UINT16(403, reference_cycles_to_rmt_ticks(2581));
+    TEST_ASSERT_EQUAL_UINT16(605, reference_cycles_to_rmt_ticks(3871));
+    TEST_ASSERT_EQUAL_UINT16(2419, reference_cycles_to_rmt_ticks(15483));
+    TEST_ASSERT_EQUAL_UINT16(1210, reference_cycles_to_rmt_ticks(7741));
+    TEST_ASSERT_EQUAL_UINT16(1814, reference_cycles_to_rmt_ticks(11612));
+}
+
 
 void test_all_raw_symbols_are_lsb_pair_first(void) {
     const TimingProfile profile = make_tagtinker_profile();
@@ -45,19 +53,28 @@ void test_all_raw_symbols_are_lsb_pair_first(void) {
         static_cast<int>(Status::kOk),
         static_cast<int>(encode_frame(payload, 1, profile, frame)));
     TEST_ASSERT_EQUAL_UINT32(5, frame.symbol_count);
-    const std::uint8_t expected_symbols[] = {0, 1, 2, 3, 0};
-    const std::uint32_t expected_starts[] = {0, 101, 383, 544, 765};
+    const Pp4Symbol expected_symbols[] = {
+        {0, 40, 61, 403, 605},
+        {1, 40, 242, 403, 2419},
+        {2, 40, 121, 403, 1210},
+        {3, 40, 181, 403, 1814},
+        {0, 40, 0, 403, 0},
+    };
     std::uint32_t elapsed = 0;
     for (std::size_t i = 0; i < frame.symbol_count; ++i) {
-        TEST_ASSERT_EQUAL_UINT32(expected_starts[i], elapsed);
-        TEST_ASSERT_EQUAL_UINT8(expected_symbols[i], frame.symbols[i].value);
-        TEST_ASSERT_EQUAL_UINT32(40, frame.symbols[i].burst_us);
+        TEST_ASSERT_EQUAL_UINT8(expected_symbols[i].value, frame.symbols[i].value);
+        TEST_ASSERT_EQUAL_UINT32(expected_symbols[i].burst_us, frame.symbols[i].burst_us);
+        TEST_ASSERT_EQUAL_UINT32(expected_symbols[i].gap_us, frame.symbols[i].gap_us);
+        TEST_ASSERT_EQUAL_UINT16(
+            expected_symbols[i].rmt_high_ticks, frame.symbols[i].rmt_high_ticks);
+        TEST_ASSERT_EQUAL_UINT16(
+            expected_symbols[i].rmt_low_ticks, frame.symbols[i].rmt_low_ticks);
         elapsed += frame.symbols[i].total_us();
     }
     TEST_ASSERT_EQUAL_UINT32(805, frame.total_duration_us);
     TEST_ASSERT_EQUAL_UINT32(805, elapsed);
-    TEST_ASSERT_EQUAL_UINT32(0, frame.symbols[4].gap_us);
 }
+
 
 void test_golden_single_byte_patterns_and_closing_burst(void) {
     const TimingProfile profile = make_tagtinker_profile();
@@ -191,6 +208,7 @@ void run_all_tests(void) {
     UNITY_BEGIN();
     RUN_TEST(test_tagtinker_profile_and_effective_carrier);
     RUN_TEST(test_symbol_gap_lookup_uses_raw_two_bit_value);
+    RUN_TEST(test_reference_cycles_to_rmt_ticks_uses_tagtinker_literals);
     RUN_TEST(test_all_raw_symbols_are_lsb_pair_first);
     RUN_TEST(test_golden_single_byte_patterns_and_closing_burst);
     RUN_TEST(test_ordering_crosses_byte_boundary);

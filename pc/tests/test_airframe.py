@@ -31,12 +31,53 @@ from eslbridge.precir import MODULATION_PP4, calculate_precir_crc16, derive_pric
 
 PLID = derive_pricer_plid(TAGTINKER_BARCODE)
 PING_GOLDEN = bytes.fromhex("8502b3b73f97010000000101010101010101010101010101010101010101402c")
+PARAMS_GOLDEN = bytes.fromhex(
+    "8502b3b73f340000000516d000000000d0007000000000000088000000000000e1d5"
+)
+DATA_0000_GOLDEN = bytes.fromhex(
+    "8502b3b73f34000000200000ffffffffffffffffffffffffffffffffffffffffa972"
+)
+DATA_0123_GOLDEN = bytes.fromhex(
+    "8502b3b73f34000000200123ffffffff00000000000000000000000000000000a6dd"
+)
+REFRESH_GOLDEN = bytes.fromhex("8502b3b73f3400000001000000000000000000000000000000000000fbd5")
 
 
 def test_ping_is_exact_32_byte_direct_airframe() -> None:
     frame = make_tagtinker_ping_frame(PLID)
     assert frame == PING_GOLDEN
     assert len(frame) == 32
+    assert not frame.startswith(AIRFRAME_DONGLE_HEADER)
+
+
+def test_tagtinker_params_builder_matches_padded_count_golden() -> None:
+    frame = make_tagtinker_params_frame(PLID)
+    assert frame == PARAMS_GOLDEN
+    assert len(frame) == 34
+    assert frame[10:12] == b"\x16\xd0"
+    assert not frame.startswith(AIRFRAME_DONGLE_HEADER)
+
+
+def test_tagtinker_data_builder_matches_first_all_ff_golden() -> None:
+    frame = make_tagtinker_data_frame(PLID, 0, b"\xff" * 20)
+    assert frame == DATA_0000_GOLDEN
+    assert len(frame) == 34
+    assert not frame.startswith(AIRFRAME_DONGLE_HEADER)
+
+
+def test_tagtinker_data_builder_matches_terminal_mixed_payload_golden() -> None:
+    frame = make_tagtinker_data_frame(
+        PLID, 0x0123, bytes.fromhex("ffffffff00000000000000000000000000000000")
+    )
+    assert frame == DATA_0123_GOLDEN
+    assert len(frame) == 34
+    assert not frame.startswith(AIRFRAME_DONGLE_HEADER)
+
+
+def test_tagtinker_refresh_builder_matches_golden() -> None:
+    frame = make_tagtinker_refresh_frame(PLID)
+    assert frame == REFRESH_GOLDEN
+    assert len(frame) == 30
     assert not frame.startswith(AIRFRAME_DONGLE_HEADER)
 
 

@@ -1,6 +1,8 @@
 #include "orientation_test.hpp"
 
+#ifdef ARDUINO
 #include <Arduino.h>
+#endif
 
 #include "app_config.hpp"
 #include "ir_transmitter.hpp"
