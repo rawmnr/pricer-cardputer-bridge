@@ -56,35 +56,33 @@ Use the application-only `firmware.bin`. Do not distribute a full flash dump or 
 
 ## Cardputer keyboard orientation tests
 
-The running application includes a local, PC-free finite TagTinker type-1327
-test sequence. After aligning the built-in IR emitter with the target, press
-one of the number keys. Each key selects the same direct AirFrame profile:
+The running application includes a local, PC-free finite orientation test.
+This mapping is a software-defined test plan; this README does not claim that
+the orientation test has been run on hardware. After aligning the built-in IR
+emitter with a personally owned or explicitly authorized target, press one of
+the number keys:
 
-| Key | Action |
-|---|---|
-| `1` | `TAGTINKER_1327` compatibility slot 1 |
-| `2` | `TAGTINKER_1327` compatibility slot 2 |
-| `3` | `TAGTINKER_1327` compatibility slot 3 |
-| `4` | `TAGTINKER_1327` compatibility slot 4 |
+| Key | Plan | Sequence |
+|---|---|---|
+| `1` | `TAGTINKER_BLINK` | Direct ping repeated 161 times with 5 ms gaps; 20 ms pause; addressed flash command repeated 81 times with 5 ms gaps. |
+| `2` | `TAGTINKER_1327_RAW` | The 295-AirFrame raw type-1327 page-0 image plan. |
+| `3` | `TAGTINKER_1327_RAW` | The same 295-AirFrame raw type-1327 page-0 image plan. |
+| `4` | `TAGTINKER_1327_RAW` | The same 295-AirFrame raw type-1327 page-0 image plan. |
 
-The profile targets barcode `N4163114582613272`, sends page 0 at 208 x 112
-with two MSB-first planes, and uses direct AirFrame bytes. It sends a ping,
-parameters, 292 indexed 20-byte data packets, and refresh. The repeat metadata
-is 81/16/3/21 with a 500 us inter-repeat gap; the transmit scene also requires
-50 ms settle delays after ping and parameters, a 1 ms delay after every 32 data
-frames, and 50 ms before refresh. The legacy `00 00 00 40` dongle marker is
-never prepended by this direct path.
+The raw plan targets barcode `N4163114582613272`, page 0 at 208 x 112 with
+two MSB-first planes: one ping, one parameter frame, 292 indexed 20-byte data
+frames, and one refresh frame. Its repeat metadata is 81/16/3/21 with a
+500 us inter-repeat gap; scene delays are 50 ms after ping and parameters,
+1 ms after every 32 data frames, and 50 ms before refresh. The direct AirFrame
+path never prepends the legacy `00 00 00 40` dongle marker.
 
 Local comparison with TagTinker upstream commit
 `81adb463eb9918b72a3acaabd5ef452960ba81ce` matches the generated AirFrame
 bytes and PP4 raw-symbol mapping. This is source/vector correspondence
-evidence only: the 2026-08-08 settle-gap retest still produced an operator-
-observed no-reaction result, and carrier behavior, optical behavior, and
-physical ESL compatibility remain unmeasured or unverified.
-
-Historical PrecIR and PricehaxBT profiles remain available only as explicitly
-named non-primary compatibility vectors. The direct TagTinker path uses the
-bounded PP4 waveform generator; physical ESL compatibility remains unverified.
+evidence only: carrier behavior, optical behavior, receiver behavior, and
+physical ESL compatibility remain unmeasured or unverified. See
+[`docs/hardware-notes.md`](docs/hardware-notes.md) for the no-oscilloscope
+decision matrix.
 
 ## Why this split
 

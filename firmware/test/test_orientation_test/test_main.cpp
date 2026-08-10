@@ -32,24 +32,64 @@ using namespace eslbridge;
 
 void setUp(void) {}
 void tearDown(void) {}
+void assert_frame_bytes(
+    const OrientationTestFrame& frame,
+    const std::uint8_t* expected,
+    const std::size_t expected_length) {
+    TEST_ASSERT_EQUAL_UINT32(expected_length, frame.length);
+    for (std::size_t index = 0; index < expected_length; ++index) {
+        TEST_ASSERT_EQUAL_UINT8(expected[index], frame.data[index]);
+    }
+}
+
+void test_orientation_kOne_is_tag_tinker_blink_plan(void) {
+    constexpr std::uint8_t expected_ping[] = {
+        0x85, 0x02, 0xB3, 0xB7, 0x3F, 0x97, 0x01, 0x00, 0x00, 0x00,
+        0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01,
+        0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01,
+        0x40, 0x2C,
+    };
+    constexpr std::uint8_t expected_flash[] = {
+        0x85, 0x02, 0xB3, 0xB7, 0x3F, 0x06, 0x49, 0x00, 0x00, 0x00,
+        0x05, 0xE7, 0xDF,
+    };
+
+    const auto& plan = orientation_test_plan(OrientationTest::kOne);
+
+    TEST_ASSERT_EQUAL_STRING("TAGTINKER_BLINK", orientation_test_name(OrientationTest::kOne));
+    TEST_ASSERT_EQUAL_UINT32(2, plan.frame_count);
+
+    const auto& ping = plan.frames[0];
+    assert_frame_bytes(ping, expected_ping, sizeof(expected_ping));
+    TEST_ASSERT_EQUAL_UINT16(161, ping.repeats);
+    TEST_ASSERT_EQUAL_UINT32(5000, ping.inter_repeat_gap_us);
+    TEST_ASSERT_EQUAL_UINT32(0, ping.pre_transmit_gap_us);
+
+    const auto& flash = plan.frames[1];
+    assert_frame_bytes(flash, expected_flash, sizeof(expected_flash));
+    TEST_ASSERT_EQUAL_UINT16(81, flash.repeats);
+    TEST_ASSERT_EQUAL_UINT32(5000, flash.inter_repeat_gap_us);
+    TEST_ASSERT_EQUAL_UINT32(20000, flash.pre_transmit_gap_us);
+}
+
 
 void test_all_orientation_keys_share_one_plan(void) {
-    const auto& one = orientation_test_plan(OrientationTest::kOne);
     const auto& two = orientation_test_plan(OrientationTest::kTwo);
     const auto& three = orientation_test_plan(OrientationTest::kThree);
     const auto& four = orientation_test_plan(OrientationTest::kFour);
 
-    TEST_ASSERT_EQUAL_UINT32(295, one.frame_count);
-    TEST_ASSERT_TRUE(one.frames == two.frames);
-    TEST_ASSERT_TRUE(one.frames == three.frames);
-    TEST_ASSERT_TRUE(one.frames == four.frames);
-    TEST_ASSERT_EQUAL_UINT32(one.frame_count, two.frame_count);
-    TEST_ASSERT_EQUAL_UINT32(one.frame_count, three.frame_count);
-    TEST_ASSERT_EQUAL_UINT32(one.frame_count, four.frame_count);
+    TEST_ASSERT_EQUAL_STRING("TAGTINKER_1327_RAW", orientation_test_name(OrientationTest::kTwo));
+    TEST_ASSERT_EQUAL_STRING("TAGTINKER_1327_RAW", orientation_test_name(OrientationTest::kThree));
+    TEST_ASSERT_EQUAL_STRING("TAGTINKER_1327_RAW", orientation_test_name(OrientationTest::kFour));
+    TEST_ASSERT_EQUAL_UINT32(295, two.frame_count);
+    TEST_ASSERT_TRUE(two.frames == three.frames);
+    TEST_ASSERT_TRUE(two.frames == four.frames);
+    TEST_ASSERT_EQUAL_UINT32(two.frame_count, three.frame_count);
+    TEST_ASSERT_EQUAL_UINT32(two.frame_count, four.frame_count);
 }
 
 void test_orientation_frame_order_and_count(void) {
-    const auto& plan = orientation_test_plan(OrientationTest::kOne);
+    const auto& plan = orientation_test_plan(OrientationTest::kTwo);
 
     // The sequence is ping, parameters, 292 indexed data packets, refresh.
     TEST_ASSERT_EQUAL_UINT32(32, plan.frames[0].length);
@@ -82,7 +122,7 @@ void test_orientation_frame_order_and_count(void) {
 }
 
 void test_orientation_repeat_metadata(void) {
-    const auto& plan = orientation_test_plan(OrientationTest::kOne);
+    const auto& plan = orientation_test_plan(OrientationTest::kTwo);
 
     TEST_ASSERT_EQUAL_UINT16(81, plan.frames[0].repeats);
     TEST_ASSERT_EQUAL_UINT16(16, plan.frames[1].repeats);
@@ -97,7 +137,7 @@ void test_orientation_repeat_metadata(void) {
 }
 
 void test_orientation_upstream_pre_transmit_gaps(void) {
-    const auto& plan = orientation_test_plan(OrientationTest::kOne);
+    const auto& plan = orientation_test_plan(OrientationTest::kTwo);
 
     TEST_ASSERT_EQUAL_UINT32(0, plan.frames[0].pre_transmit_gap_us);
     TEST_ASSERT_EQUAL_UINT32(50000, plan.frames[1].pre_transmit_gap_us);
@@ -112,8 +152,10 @@ void test_orientation_upstream_pre_transmit_gaps(void) {
     TEST_ASSERT_EQUAL_UINT32(50000, plan.frames[294].pre_transmit_gap_us);
 }
 
+
 void run_all_tests(void) {
     UNITY_BEGIN();
+    RUN_TEST(test_orientation_kOne_is_tag_tinker_blink_plan);
     RUN_TEST(test_all_orientation_keys_share_one_plan);
     RUN_TEST(test_orientation_frame_order_and_count);
     RUN_TEST(test_orientation_repeat_metadata);

@@ -16,6 +16,9 @@ constexpr std::uint8_t kTagTinker1327Frame0000[] = {
     0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01,
     0x01, 0x01, 0x01, 0x01, 0x40, 0x2C,
 };
+constexpr std::uint8_t kTagTinker1327FlashFrame[] = {
+    0x85, 0x02, 0xB3, 0xB7, 0x3F, 0x06, 0x49, 0x00, 0x00, 0x00, 0x05, 0xE7, 0xDF,
+};
 
 constexpr std::uint8_t kTagTinker1327Frame0001[] = {
     0x85, 0x02, 0xB3, 0xB7, 0x3F, 0x34, 0x00, 0x00, 0x00, 0x05, 0x16, 0xD0, 0x00,
@@ -2086,11 +2089,21 @@ constexpr OrientationTestPlan kTagTinker1327Plan = {
     sizeof(kTagTinker1327Frames) / sizeof(kTagTinker1327Frames[0]),
 };
 
+constexpr OrientationTestFrame kTagTinkerBlinkFrames[] = {
+    {kTagTinker1327Frame0000, sizeof(kTagTinker1327Frame0000), 161, 5000, 0},
+    {kTagTinker1327FlashFrame, sizeof(kTagTinker1327FlashFrame), 81, 5000, 20000},
+};
+constexpr OrientationTestPlan kTagTinkerBlinkPlan = {
+    kTagTinkerBlinkFrames,
+    sizeof(kTagTinkerBlinkFrames) / sizeof(kTagTinkerBlinkFrames[0]),
+};
+
 }  // namespace
 
 const OrientationTestPlan& orientation_test_plan(const OrientationTest test) {
     switch (test) {
         case OrientationTest::kOne:
+            return kTagTinkerBlinkPlan;
         case OrientationTest::kTwo:
         case OrientationTest::kThree:
         case OrientationTest::kFour:
@@ -2101,7 +2114,17 @@ const OrientationTestPlan& orientation_test_plan(const OrientationTest test) {
 }
 
 const char* orientation_test_name(const OrientationTest test) {
-    return test == OrientationTest::kNone ? "NONE" : "TAGTINKER_1327";
+    switch (test) {
+        case OrientationTest::kNone:
+            return "NONE";
+        case OrientationTest::kOne:
+            return "TAGTINKER_BLINK";
+        case OrientationTest::kTwo:
+        case OrientationTest::kThree:
+        case OrientationTest::kFour:
+        default:
+            return "TAGTINKER_1327_RAW";
+    }
 }
 
 protocol::Status run_orientation_test(
