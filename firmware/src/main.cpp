@@ -184,10 +184,13 @@ void setup() {
 void loop() {
     const auto key_test = ui.update();
     if (key_test != eslbridge::OrientationTest::kNone) {
+        const auto tx_count_before = transmitter.tx_count();
+        ui.show_orientation_test_start(key_test);
         const auto status = eslbridge::run_orientation_test(transmitter, key_test);
+        const auto tx_delta = transmitter.tx_count() - tx_count_before;
         device_status.last_command = Command::kSendPricerFrame;
         device_status.last_error = status;
-        ui.show_orientation_test(key_test, status, transmitter.tx_count());
+        ui.show_orientation_test_result(key_test, status, tx_delta);
     }
 
     const auto now_ms = millis();

@@ -38,50 +38,74 @@ Each hypothesis requires a reproducible test before it becomes a project fact.
 
 Without an oscilloscope, logic analyzer, photodiode, or equivalent timing
 instrument, verification is limited to software identity, bounded-command
-behavior, and observable end-to-end symptoms:
+behavior, camera-visible emission, and observable ESL symptoms:
 
 - A phone or digital camera can show IR emission only if its sensor is
-  sensitive to the wavelength. It cannot prove carrier frequency, duty cycle,
-  PP4 symbol timing, or other physical waveform timing.
-- A visible ESL response is end-to-end behavioral evidence that a complete
-  trial produced an observable result. It cannot isolate carrier frequency,
-  duty cycle, PP4 timing, optical power, receiver behavior, or any other
-  physical cause.
-- Keep the near-IR carrier frequency, duty cycle, symbol timings, and ESL
-  compatibility as hypotheses pending measurement. Do not promote any T005
-  physical claim without a recorded instrument measurement; no oscilloscope
-  means T005 remains unvalidated.
-- No physical run of the orientation test is claimed by this document.
+  sensitive to the wavelength. It cannot prove the 1.25 MHz carrier,
+  frequency, duty cycle, PP4 symbol timing, optical power, or receiver
+  behavior.
+- A visible ESL response is end-to-end behavioral evidence for that trial. It
+  cannot isolate carrier frequency, duty cycle, PP4 timing, optical power, or
+  any other physical cause.
+- Keep carrier frequency, duty cycle, symbol timings, and ESL compatibility as
+  hypotheses pending measurement. No T005 physical claim is promoted here.
 
-## Orientation-test decision matrix
+## Orientation-test plans and interpretation
 
-Use this as an interpretation guide, not as a bench record:
+Use these values to compare the selected key with the Cardputer screen. “Unique
+encoded bytes” means plan payload bytes counted once per frame call; repeat
+counts multiply AirFrames, not this byte total.
 
-| Observation | Decision interpretation | Evidence label |
-|---|---|---|
-| Key `1` produces a visible ESL reaction | For that trial, carrier, address, PP4, and the basic command path worked; if the raw image plan still fails, investigate image parameters, data, or refresh. | **Verified only if reproduced; no run claimed here.** |
-| Key `1` produces no reaction while a camera sees IR | Physical carrier frequency, duty, optical power, receiver compatibility, and target assumptions remain unresolved. Camera visibility is only weak optical-emission evidence. | **Hypotheses; camera cannot verify timing.** |
-| Orientation command returns status `0x00` | Only local RMT completion is established; this does not mean the ESL accepted the frame. | **Verified firmware meaning.** |
-| `GET_STATUS` `tx_count` increases | Key `1` increases the count by 2; the raw plan increases it by 295. These are completed local frame-transmission calls. | **Verified firmware behavior.** |
+| Key/name | Frame calls | Repeated AirFrames | Unique encoded bytes | Intended observation |
+|---|---:|---:|---:|---|
+| `1` / `TAGTINKER_BLINK` | 2 | 242 | 45 | Addressed ping (161 repeats) plus addressed LED/flash (81 repeats); address/LED discriminator. No visible response is inconclusive unless the same ESL visibly responds to the original TagTinker LED Test. |
+| `2` / `TAGTINKER_RLE_BLACK` | 4 | 121 | 130 | TagTinker Auto/RLE full-black primary plus blank accent; expected visible full black/refresh. |
+| `3` / `TAGTINKER_RLE_WHITE` | 4 | 121 | 130 | TagTinker Auto/RLE all-white restore; expected visible white/refresh. |
+| `4` / `TAGTINKER_1327_RAW` | 295 | 994 | 10024 | Existing all-white raw type-1327 page-0 plan. |
 
-## Reproducible device smoke procedure
+The preflight orientation screen identifies the selected `KEY` and name, then
+shows `FRAMES`, `AIRFRAMES`, `BYTES`, `GPIO` (must be `44`), and
+`PP4:1254.902->1250.000 D:50%` (requested/effective carrier, approximately
+`1255->1250 kHz`, duty `50%`). It shows `STATE: SENDING` before transmission.
+The final screen shows `OK 0x00 TX:+N` or `ERROR 0xHH TX:+N`, where `N` is the
+completed TX-call delta, followed by current `GIT` SHA and `BUILD` provenance.
+The ready screen also shows the current Git SHA and build provenance. The UI
+redraws only before and after the plan; it does not redraw in the timing path.
 
-Use this ordered procedure for a device-only smoke check. It is not a substitute for T005 measurement or an ESL compatibility validation:
+An orientation status of `0x00` establishes only local RMT completion. A
+`TX:+N` increase establishes completed local transmission calls, not ESL
+receipt or physical waveform validity. Key 1 visibly changing an ESL is useful
+discriminator evidence only when reproduced; no run is claimed here.
 
-1. Install the current application-only `firmware.bin` through M5Launcher using its SD browser or WebUI OTA path. Do not use a merged image or full-flash upload.
-2. Launch the bridge application and confirm the ready screen shows the expected seven-character Git SHA and the expected firmware profile. Stop if either identity is unknown or does not match the selected artifact.
-3. Run the bounded carrier test on GPIO 44. Keep the firmware-enforced burst hard limit at or below 5 ms; never use a continuous-carrier mode.
-4. If the camera sensor can see the emitter, observe the GPIO 44 IR output during the bounded burst and record whether emission was visible. Treat this as optical-emission smoke evidence only, not frequency or timing evidence.
-5. Only on a personally owned or explicitly authorized ESL, optionally run the
-   orientation test. Key `1` (`TAGTINKER_BLINK`) sends a direct ping 161 times
-   with 5 ms gaps, pauses 20 ms, then sends the addressed flash command 81
-   times with 5 ms gaps. Keys `2`/`3`/`4` select the same
-   `TAGTINKER_1327_RAW` 295-AirFrame raw type-1327 page-0 image plan. Record
-   whether the tag visibly responds, without treating a response or
-   no-response as proof of physical timing correctness.
-6. Using `docs/bench-template.md`, record the exact artifact path, device and firmware identity, distance, emitter/receiver alignment, ambient-light conditions, repetition settings, observed result, and raw artifact path. Mark unmeasured carrier frequency, duty, timing, and ESL compatibility as hypotheses.
+## No-oscilloscope sequence
 
-The procedure may establish that the application boots, identifies itself, accepts a bounded request, and possibly produces visible optical or ESL behavior. It must not be used to promote T005 frequency/duty claims or any physical ESL compatibility claim without instrumented measurement.
+This is a concise smoke sequence, not T005 measurement or ESL compatibility
+validation:
+
+1. Install the current **application-only** `firmware.bin` through M5Launcher
+   SD browser or WebUI OTA. Do not use direct upload, a merged image, or a
+   full-flash image.
+2. Launch the bridge application. Confirm the displayed current Git SHA and
+   build provenance match the selected artifact/build; stop on unknown or
+   mismatched identity.
+3. Align the built-in emitter and ESL receiver at `0-1 cm`, using only a
+   personally owned or explicitly authorized ESL.
+4. Run key `2` once and wait for the complete result.
+5. If the ESL becomes black, run key `3` once to restore white and wait for
+   the complete result.
+6. Only then run key `4` raw. Do not treat a local `OK` as tag receipt.
+7. A camera may confirm optical activity only; it cannot confirm the 1.25 MHz
+   carrier, timing, duty, or optical power.
+8. Record the exact selected key/name, `FRAMES`, `AIRFRAMES`, `BYTES`, GPIO,
+   requested/effective carrier and duty, final status hex, `TX:+N`, Git SHA,
+   build provenance, and visible ESL outcome.
+
+## Unverified field report
+
+User observation from previous commit `037b006`: key `1` completed
+`STATUS 0x00` with TX delta `2` and camera-observed IR, but no ESL reaction.
+This proves local RMT completion only; it does not prove a valid RF/optical
+waveform or ESL receipt. No scope was available.
 
 
 ## Bench priorities

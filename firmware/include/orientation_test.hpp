@@ -29,6 +29,18 @@ struct OrientationTestPlan {
     const OrientationTestFrame* frames;
     std::size_t frame_count;
 };
+struct OrientationTestSummary {
+    std::uint32_t frame_count{};
+    std::uint32_t airframe_count{};
+    std::uint32_t encoded_byte_count{};
+    std::uint8_t modulation{};
+    std::uint8_t ir_gpio{};
+    std::uint32_t requested_carrier_hz{};
+    std::uint32_t effective_carrier_hz{};
+    std::uint8_t duty_percent{};
+};
+
+OrientationTestSummary orientation_test_summary(OrientationTest test);
 
 const OrientationTestPlan& orientation_test_plan(OrientationTest test);
 const char* orientation_test_name(OrientationTest test);

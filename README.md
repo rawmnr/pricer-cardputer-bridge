@@ -58,16 +58,24 @@ Use the application-only `firmware.bin`. Do not distribute a full flash dump or 
 
 The running application includes a local, PC-free finite orientation test.
 This mapping is a software-defined test plan; this README does not claim that
-the orientation test has been run on hardware. After aligning the built-in IR
-emitter with a personally owned or explicitly authorized target, press one of
-the number keys:
+the orientation test has been run on hardware. Use it only with a personally
+owned or explicitly authorized ESL after aligning the built-in IR emitter.
 
-| Key | Plan | Sequence |
+| Key | Name | Exact plan and expected visible result |
 |---|---|---|
-| `1` | `TAGTINKER_BLINK` | Direct ping repeated 161 times with 5 ms gaps; 20 ms pause; addressed flash command repeated 81 times with 5 ms gaps. |
-| `2` | `TAGTINKER_1327_RAW` | The 295-AirFrame raw type-1327 page-0 image plan. |
-| `3` | `TAGTINKER_1327_RAW` | The same 295-AirFrame raw type-1327 page-0 image plan. |
-| `4` | `TAGTINKER_1327_RAW` | The same 295-AirFrame raw type-1327 page-0 image plan. |
+| `1` | `TAGTINKER_BLINK` | Two frame calls: addressed ping (161 repeats) then addressed LED/flash (81 repeats), for 242 repeated AirFrames and 45 unique encoded bytes. This is an address/LED discriminator. No visible response is inconclusive unless the same ESL visibly responds to the original TagTinker LED Test. |
+| `2` | `TAGTINKER_RLE_BLACK` | Four frame calls: TagTinker Auto/RLE full-black primary plus blank accent, for 121 repeated AirFrames and 130 unique encoded bytes. Expected visible full black/refresh. |
+| `3` | `TAGTINKER_RLE_WHITE` | Four frame calls: TagTinker Auto/RLE all-white restore, for 121 repeated AirFrames and 130 unique encoded bytes. Expected visible white/refresh. |
+| `4` | `TAGTINKER_1327_RAW` | Existing 295-call all-white raw type-1327 page-0 plan, for 994 repeated AirFrames and 10024 unique encoded bytes. |
+
+“Unique encoded bytes” counts each selected frame-call payload once; repeat
+counts multiply AirFrames, not this displayed byte total. The Cardputer screen
+shows the selected key/name, frame calls, repeated AirFrames, bytes, GPIO 44,
+requested/effective PP4 carrier (`1254.902 -> 1250.000 kHz`, approximately
+`1255 -> 1250 kHz`) and duty `50%`, followed by `SENDING` and then `OK`/`ERROR`
+with a hex status and TX-call delta. It also shows the current Git SHA and
+build provenance. The display redraws only before and after a plan, outside
+the timing-critical transmit path.
 
 The raw plan targets barcode `N4163114582613272`, page 0 at 208 x 112 with
 two MSB-first planes: one ping, one parameter frame, 292 indexed 20-byte data
@@ -82,7 +90,7 @@ bytes and PP4 raw-symbol mapping. This is source/vector correspondence
 evidence only: carrier behavior, optical behavior, receiver behavior, and
 physical ESL compatibility remain unmeasured or unverified. See
 [`docs/hardware-notes.md`](docs/hardware-notes.md) for the no-oscilloscope
-decision matrix.
+sequence and decision matrix.
 
 ## Why this split
 
